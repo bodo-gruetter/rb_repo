@@ -2,3 +2,13 @@
 title: "R Bootcamp Assignment"
 output: html_document
 ---
+
+# 0. Import Packages
+
+# 1. Prepare Data
+
+# 2. Graphical Analysis
+
+# 3. Modelling
+
+# 4. A Chapter of choice
