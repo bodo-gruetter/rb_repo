@@ -203,6 +203,38 @@ plot_cars
 
 
 ## Modelling
+##########Bodo
+##Different models
+full.model.1 <- price ~ seller + offerType + abtest + vehicleType + yearOfRegistration +
+  gearbox + powerPS + model + kilometer + monthOfRegistration + fuelType + brand +
+  notRepairedDamage + postalCode + age
+starting.model.1 <- price ~ seller + offerType + abtest + vehicleType + yearOfRegistration +
+  gearbox + powerPS + model + kilometer + monthOfRegistration + fuelType + brand +
+  notRepairedDamage + postalCode + age
+medium.model.1 <- price ~ kilometer + yearOfRegistration + powerPS + postalCode + vehicleType +
+  gearbox + brand + nrOfPictures + notRepairedDamage + fuelType
+simple.model.1 <- price ~ kilometer + yearOfRegistration + vehicleType + brand
+
+##linear modelling
+lm.full.model.1 <- lm(full.model.1, data = df.cars)
+lm.starting.model.1 <- lm(starting.model.1, data = df.cars)
+lm.medium.model.1 <- lm(medium.model.1, data = df.cars)
+lm.simple.model.1 <- lm(simple.model.1, data = df.cars)
+
+##Proof
+summary(lm.full.model.1)
+summary(lm.starting.model.1)
+summary(lm.medium.model.1)
+summary(lm.simple.model.1)
+
+##Updating
+lm.starting.model.1 <- update(lm.starting.model.1, . ~ . - abtest)
+
+final.model.1 <- price ~ seller + offerType + abtest + vehicleType + yearOfRegistration +
+  gearbox + powerPS + model + kilometer + monthOfRegistration + fuelType + brand +
+  notRepairedDamage + postalCode + age
+
+##########Malik
 lm.cars <-  lm(df.cars$price ~df.cars$kilometer 
            + df.cars$yearOfRegistration
            + df.cars$powerPS
@@ -243,14 +275,6 @@ summary(lm.cars.kilometer)
 lm.cars.age <- lm(df.cars$price ~df.cars$age)
 
 summary(lm.cars.age)
-
-
-
-
-
-
-
-
 
 
 
