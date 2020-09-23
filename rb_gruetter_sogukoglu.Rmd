@@ -10,5 +10,21 @@ output: html_document
 # 2. Graphical Analysis
 
 # 3. Modelling
+## 3.1 The starting model
 
-# 4. A Chapter of choice
+## 3.2 Some more complex models
+
+## 3.3 A comparison of the models
+
+# 4. The igraph-Package
+## 4.1 An introduction into the graph theory
+Using the igraph library, graph algorithms can be easily implemented in R, large graphs can be handled and visualized quickly. Before we can do this, some terms in the context of graphs must be defined. The theoretical basis of graphs is graph theory. It is a branch of mathematics.
+
+A *graph* is a network of relationships between different entities from the real world. These entities are represented in the graph as *nodes*. The nodes have *properties* that describe the corresponding object in the real world. They make it an individual. Nodes are related to each other. They are connected by *edges*.
+
+**A simple example**
+Graphs are suitable for displaying data from social networks like Facebook and Twitter. An introductory example will go into this in more detail. The following figure shows a very simple graph with three nodes, five edges and a property name - represented as a key-value construct - in each node. The graph shows a small social network between three users. Billy follows Harry and Harry follows Billy. Ruth and Harry also follow each other. Ruth follows Billy, but Billy does not follow Ruth.
+
+![](simple_graph.png)
+
+## 4.2 A simple example
