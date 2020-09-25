@@ -3,7 +3,7 @@
 library(tidyverse)
 library(corrplot)
 library("ggplot2")
-
+library(mgcv)
 
 ### Prepare Data
 
@@ -35,8 +35,8 @@ plot(df.cars$price ~df.cars$yearOfRegistration)
 # value up to 100000 Euros and only the models between 2010 and 2016 are considered 
 
 df.cars <- df.cars %>% filter(yearOfRegistration > 2010, 
-                                      yearOfRegistration < 2016, 
-                                      price < 100000)
+                              yearOfRegistration < 2016, 
+                              price < 100000)
 
 # the following example-boxplot shows that by filtering to the years 2010 - 2016 the graphic became much more visible
 boxplot(df.cars$price ~df.cars$yearOfRegistration)
@@ -63,25 +63,18 @@ apply(df.cars, MARGIN = 2,
 ### Graphical Analysis
 
 
-# correlation analysis
+
 
 # we assumed that "yearOfRegistration" and "kilometer" strongly influence the "price". 
 # with the following correlation analyis we want to see which numeric variables actually influence the price.
 
 
 
-
-# df.cars.numeric <- df.cars[, sapply(df.cars, is.numeric)]
-# 
-# cars.cor = cor(df.cars.numeric)
-# 
-# corrplot(cars.cor)
-
-
+# correlation analysis: see which variables influence price
 predictors = c(colnames(df.cars))
 corrplot(cor(data.matrix(df.cars[predictors]) ))
 
-# Here we see that 
+# In the correlation analysis we see that 
 # - yearOfRegistration
 # - powerPS
 # - age (calculated from yearOfRegistration)
@@ -94,7 +87,7 @@ corrplot(cor(data.matrix(df.cars[predictors]) ))
 # - notRepairedDamage
 # - postalCode
 # ...have a certain influence on the price. 
-# So there are also variables that we did not see as having a strong effect previously.
+# So there are also variables that we did not think as having a strong effect previously.
 
 
 # In the following analysis we will take a closer look at
@@ -123,10 +116,10 @@ ggplot(data = df.cars, aes(group=yearOfRegistration, y = price, x = as.factor(ye
    geom_boxplot() + xlab("year of registration") + ylab("price")
 
 
-lm.yearOfRegistration.1 <- lm(price ~ as.factor(yearOfRegistration), data = df.cars)
-lm.yearOfRegistration.0 <- lm(price ~ 1, data = df.cars)
-anova(lm.yearOfRegistration.0, lm.yearOfRegistration.1)
-
+lm.yearOfRegistration <- lm(price ~ as.factor(yearOfRegistration), data = df.cars)
+# lm.cars is the complex model that contains every independent variable
+lm.cars <- lm(price ~ 1, data = df.cars)
+anova(lm.cars, lm.yearOfRegistration)
 
 # the boxplot above clearly shows that the year of registration influences the price, because newer cars cost more. 
 # the anova test shows that there is a strong evidence that at least one year-level influences the price (see p-value) .
@@ -145,50 +138,121 @@ ggplot(data = df.cars, aes(group=brand, y = price, x = as.factor(brand))) +
    geom_boxplot() + xlab("brand") + ylab("price")
 
 
-lm.brand.1 <- lm(price ~ as.factor(brand), data = df.cars)
-lm.brand.0 <- lm(price ~ 1, data = df.cars)
-anova(lm.yearOfRegistration.0, lm.brand.1)
+lm.brand <- lm(price ~ as.factor(brand), data = df.cars)
+anova(lm.cars, lm.brand)
 # the boxplot above clearly shows that the brand influences the price. 
 # the anova test shows that there is a strong evidence that at least one brand influences the price (see p-value) .
 # the anova test shows also that the model only having brand as independent variable has smaller residuals than the complex model (see RSS).
 
 
+## fuel type
+ggplot(data = df.cars, aes(group = fuelType, y = price, x = as.factor(fuelType))) +
+   geom_boxplot() + xlab("fuel type") + ylab("price")
+
+lm.fuelType <- lm(price ~ as.factor(fuelType), data = df.cars)
+anova(lm.cars, lm.fuelType)
+# the boxplot above certainly shows that the fuel type influences the price. 
+# the anova test shows that there is a strong evidence that at least one fuel type-level influences the price (see p-value) .
+# the anova test shows also that the model only having fuelType as independent variable has smaller residuals than the complex model (see RSS).
+
+
+## gearbox
+ggplot(data = df.cars, aes(group = gearbox, y = price, x = as.factor(gearbox))) +
+   geom_boxplot() + xlab("gearbox") + ylab("price")
+
+lm.gearbox <- lm(price ~ as.factor(gearbox), data = df.cars)
+anova(lm.cars, lm.gearbox)
+# the boxplot above clearly shows that gearbox influences the price. 
+# the anova test shows that there is a strong evidence that at least one gearbox-type influences the price (see p-value) .
+# the anova test shows also that the model only having gearbox as independent variable has smaller residuals than the complex model (see RSS).
+
 
 ## vehicleType
-ggplot(data = df.cars, aes(y = price, x = vehicleType)) +
-   geom_boxplot() + xlab("vehicle Type") + ylab("price")
+ggplot(data = df.cars, aes(y = price, x = as.factor(vehicleType))) +
+   geom_boxplot() + xlab("vehicle type") + ylab("price")
 
-lm.vehicleType.1 <- lm(price ~ as.factor(vehicleType), data = df.cars)
-lm.vehicleType.0 <- lm(price ~ 1, data = df.cars)
-anova(lm.vehicleType.0, lm.vehicleType.1)
+lm.vehicleType <- lm(price ~ as.factor(vehicleType), data = df.cars)
+anova(lm.cars, lm.vehicleType)
 # the boxplot above clearly shows that the vehicle type influences the price. 
 # the anova test shows that there is a strong evidence that at least one vehicle-type influences the price (see p-value) .
 # the anova test shows also that the model only having vehicleType as independent variable has smaller residuals than the complex model (see RSS).
 
 
+## notRepairedDamage
+
+ggplot(data = df.cars, aes(y = price, x = as.factor(notRepairedDamage))) +
+   geom_boxplot() + xlab("not repaired damage") + ylab("price")
+
+lm.notRepairedDamage <- lm(price ~ as.factor(notRepairedDamage), data = df.cars)
+anova(lm.cars, lm.notRepairedDamage)
+# the boxplot above clearly shows that the the information whether car has a non-repaired demage or not influences the price. 
+# the anova test shows that there is a strong evidence that this information influences the price (see p-value) .
+# the anova test shows also that the model only having this information as independent variable has smaller residuals than the complex model (see RSS).
+
+## postalCode
+
+ggplot(data = df.cars, aes(y = price, x = as.factor(postalCode))) +
+   geom_boxplot() + xlab("postal Code") + ylab("price")
+
+lm.postalCode <- lm(price ~ as.factor(postalCode), data = df.cars)
+anova(lm.cars, lm.postalCode)
 
 
 
 
-## numeric variables
-# - yearOfRegistration
+## lets go on with the numeric variables which are the following:
 # - powerPS
 # - kilometer
 # - age
+# numeric variables are best explained with a classical plot
+
+## powerPS
+
+ggplot(data = df.cars, mapping = aes(y = price, x = powerPS)) + geom_point(alpha = 0.4) +
+   geom_point()  + xlab("PS") +ylab("price") +geom_smooth(method = "gam")
+
+# there is little to recognise. therefore the x axis is logaritised in the following plot:
+
+ggplot(data = df.cars, mapping = aes(y = price, x = powerPS)) + geom_point(alpha = 0.4) +
+   geom_point()  + xlab("PS") +ylab("price") + scale_x_log10() +geom_smooth(method = "gam")
+
+# In the plot above, one can see that "powerPS" does not show a linear but a quadratic relationship to the "price"
+# ....following model should confirm that: 
+gam.powerPS <- gam(price ~ s(powerPS), data = df.cars)
+summary(gam.powerPS)
 
 
-plot_cars <- ggplot(
+
+## kilometer
+
+ggplot(data = df.cars, mapping = aes(y = price, x = kilometer)) + geom_point(alpha = 0.4) +
+   geom_point()  + xlab("kilometer") +ylab("price") + geom_smooth(method = "gam")
+
+# in plot above, one can see that kilometres seems to have a linear effect on price.
+# ...floowing model should confirm that:
+lm.kilometer <- lm(price ~ kilometer, data = df.cars)
+summary(lm.kilometer)
+# and indeed the p-value shows that "kilometer" has a linear effect on the price
+
+
+## age
+
+ggplot(
    data = df.cars, 
-   mapping = aes(x = yearOfRegistration, 
+   mapping = aes(x = age, 
                  y = price)
 )  + geom_point(alpha = 0.4) +
    geom_smooth(method = "lm", se=FALSE) +
    scale_color_brewer(type = "qual", palette = "Dark2") +
-   ggtitle("Price based on Kilometers (per vehicle type)")
+   scale_x_log10() +
+   ggtitle("Price based on age")
 
-plot_cars
+# the above plot time that age has a linear influence on price. 
+# note: because there were not enough values in the x-axis, "lm" was used for the smooth-line instead of "gam"
 
-
+# following model confirms that age has a linear effect on price.
+lm.age <- lm(price ~ age, data = df.cars)
+summary(lm.age)
 
 
 
@@ -206,13 +270,13 @@ plot_cars
 ##########Bodo
 ##Different models
 full.model.1 <- price ~ seller + offerType + abtest + vehicleType + yearOfRegistration +
-  gearbox + powerPS + model + kilometer + monthOfRegistration + fuelType + brand +
-  notRepairedDamage + postalCode + age
+   gearbox + powerPS + model + kilometer + monthOfRegistration + fuelType + brand +
+   notRepairedDamage + postalCode + age
 starting.model.1 <- price ~ seller + offerType + abtest + vehicleType + yearOfRegistration +
-  gearbox + powerPS + model + kilometer + monthOfRegistration + fuelType + brand +
-  notRepairedDamage + postalCode + age
+   gearbox + powerPS + model + kilometer + monthOfRegistration + fuelType + brand +
+   notRepairedDamage + postalCode + age
 medium.model.1 <- price ~ kilometer + yearOfRegistration + powerPS + postalCode + vehicleType +
-  gearbox + brand + nrOfPictures + notRepairedDamage + fuelType
+   gearbox + brand + nrOfPictures + notRepairedDamage + fuelType
 simple.model.1 <- price ~ kilometer + yearOfRegistration + vehicleType + brand
 
 ##linear modelling
@@ -231,25 +295,25 @@ summary(lm.simple.model.1)
 lm.starting.model.1 <- update(lm.starting.model.1, . ~ . - abtest)
 
 final.model.1 <- price ~ seller + offerType + abtest + vehicleType + yearOfRegistration +
-  gearbox + powerPS + model + kilometer + monthOfRegistration + fuelType + brand +
-  notRepairedDamage + postalCode + age
+   gearbox + powerPS + model + kilometer + monthOfRegistration + fuelType + brand +
+   notRepairedDamage + postalCode + age
 
 ##########Malik
 lm.cars <-  lm(df.cars$price ~df.cars$kilometer 
-           + df.cars$yearOfRegistration
-           + df.cars$powerPS
-           + df.cars$postalCode
-           + df.cars$vehicleType
-
-           + df.cars$gearbox
-           + df.cars$brand
-
-           + df.cars$nrOfPictures
-           + df.cars$notRepairedDamage
-
-           + df.cars$fuelType
-       
-           )
+               + df.cars$yearOfRegistration
+               + df.cars$powerPS
+               + df.cars$postalCode
+               + df.cars$vehicleType
+               
+               + df.cars$gearbox
+               + df.cars$brand
+               
+               + df.cars$nrOfPictures
+               + df.cars$notRepairedDamage
+               
+               + df.cars$fuelType
+               
+)
 summary(lm.cars)
 
 anova(lm.cars)
@@ -288,6 +352,14 @@ summary(lm.cars.age)
 
 
 
+
+
+
+
+
+
+
+
 #some further analyses
 
 #costs per vehcile type
@@ -295,7 +367,7 @@ boxplot(df.cars$price ~ df.cars$vehicleType)
 #t.test(df.cars$price ~ df.cars$vehicleType[df.cars$vehicleType =="cabrio" & "coupe"])
 
 
-# additional section
+## additional section
 dfPrizeMean <- df.cars %>%
    group_by(vehicleType) %>%
    summarize(meanPrice = mean(price))
@@ -350,10 +422,10 @@ plot_cars
 
 # predictions
 
-# 1. Add predictions 
+
 pred.int <- predict(lm.cars.kilometer, interval = "prediction")
 mydata <- cbind(df.cars, pred.int)
-# 2. Regression line + confidence intervals
+
 
 p <- ggplot(mydata, aes(kilometer, price)) +
    geom_point() +
@@ -365,7 +437,7 @@ p + geom_line(aes(y = lwr), color = "red", linetype = "dashed")+
 
 
 
-# 1. Add predictions 
+
 pred.int <- predict(lm.cars.age, interval = "prediction")
 mydata <- cbind(df.cars, pred.int)
 # 2. Regression line + confidence intervals
