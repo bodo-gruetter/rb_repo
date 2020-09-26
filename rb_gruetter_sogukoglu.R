@@ -257,8 +257,11 @@ summary(lm.age)
 
 ## Modelling
 ##########Bodo
+##interaction effects
+qplot(y = price, x = powerPS, data = df.cars, facets = ~ as.factor(yearOfRegistration), scale_x_log10()) + geom_smooth()
+
 ##Different models
-full.model.1 <- price ~ seller + offerType + abtest + vehicleType + yearOfRegistration +
+complex.model.1 <- price ~ seller + offerType + abtest + vehicleType + yearOfRegistration +
    gearbox + powerPS + model + kilometer + monthOfRegistration + fuelType + brand +
    notRepairedDamage + postalCode + age
 starting.model.1 <- price ~ as.factor(yearOfRegistration) + brand + fuelType + gearbox + vehicleType +
@@ -269,10 +272,7 @@ starting.model.1 <- price ~ as.factor(yearOfRegistration) + brand + fuelType + g
 gam.starting.model.1 <- gam(starting.model.1, data = df.cars)
 
 ##Proof
-summary(lm.full.model.1)
 summary(lm.starting.model.1)
-summary(lm.medium.model.1)
-summary(lm.simple.model.1)
 
 ##Updating
 gam.starting.model.1 <- update(gam.starting.model.1, . ~ . - fuelType)

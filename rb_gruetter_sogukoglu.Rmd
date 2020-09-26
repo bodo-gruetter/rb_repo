@@ -53,7 +53,7 @@ Relatively quickly something catches our eye. This is when we look at the fuelTy
 
 ```{r, message=FALSE}
 
-gam.starting.model.1 <- update(gam.starting.model.1, . ~ . - fuelType)
+gam.starting.model.2 <- update(gam.starting.model.1, . ~ . - fuelType)
 
 summary(gam.starting.model.1)$r.squared
 
@@ -63,7 +63,7 @@ The result looks much better. If we now look at the R-squared-value, we can see 
 
 ```{r, message=FALSE}
 
-gam.starting.model.1 <- update(gam.starting.model.1, . ~ . - vehicleType)
+gam.starting.model.3 <- update(gam.starting.model.2, . ~ . - vehicleType)
 
 summary(gam.starting.model.1)
 
@@ -73,7 +73,7 @@ We see that the R-Squared again deteriorates only very slightly. What we continu
 
 ```{r, message=FALSE}
 
-gam.starting.model.1 <- update(gam.starting.model.1, . ~ . - brand)
+gam.starting.model.4 <- update(gam.starting.model.3, . ~ . - brand)
 
 summary(gam.starting.model.1)
 
@@ -81,13 +81,31 @@ summary(gam.starting.model.1)
 
 The result looks very good. All factors show: There is strong evidence that these have an effect on price. The R-Squared is reduced by almost 10%. Since we want to have a model that is as good as possible but also as simple as possible, this is a good compromise for us. The following model results from our model development:
 
-**price ~ yearOfRegistration + brand + fuelType + gearbox + vehicleType +
-s(powerPS) + kilometer + age**
+**price ~ yearOfRegistration + gearbox + s(powerPS) + kilometer + age**
 
 ## 3.2 A more complex model
+Now that we have derived a relatively simple starting model, which considers only a single polynomial effect, we need a more complex model, which we can compare with the simple model. To get an appropriate comparison, we take our starting model, which we had defined before the model development, and add interactions to it. Thus, this model considers a new level of complexity on the one hand and more predictors on the other hand. The graphical analysis had shown a slight interaction effect between kilometer and gearbox. We would now like to take this into account. The following model results as comparison model:
 
+**price ~ yearOfRegistration + brand + fuelType + vehicleType +
+s(powerPS) + gearbox * kilometer + age**
+
+In R we build the following model:
+
+```{r message=FALSE}
+
+complex.model.1 <- price ~ as.factor(yearOfRegistration) + brand + fuelType + vehicleType +
+   s(powerPS) + gearbox * kilometer + age
+
+gam.complex.model.1 <- gam(complex.model.1, data = df.cars)
+
+summary(gam.complex.model.1)
+
+```
+
+Not surprisingly, this model shows a higher R-squared value than the simpler starting model.
 
 ## 3.3 A comparison of the models
+
 
 # 4. The igraph-Package
 ## 4.1 An introduction into the graph theory
