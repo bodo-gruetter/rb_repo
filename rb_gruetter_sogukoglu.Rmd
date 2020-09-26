@@ -14,6 +14,9 @@ library(igraph)
 
 # 3. Modelling
 ## 3.1 The starting model
+We have now examined a wide variety of variables and their effects on the target variable using a variety of graphs. Now we want to develop a good model from these findings and compare it with models of different degrees of complexity. To achieve this we must first define a starting model that allows us to be further developed.
+
+
 
 ## 3.2 Some more complex models
 

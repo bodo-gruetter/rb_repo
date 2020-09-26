@@ -4,6 +4,7 @@ library(tidyverse)
 library(corrplot)
 library("ggplot2")
 library(mgcv)
+library(igraph)
 
 ### Prepare Data
 
@@ -254,30 +255,15 @@ ggplot(
 lm.age <- lm(price ~ age, data = df.cars)
 summary(lm.age)
 
-
-
-
-
-
-
-# linear models
-#summary(lm(df.cars$price ~df.cars$kilometer * df.cars$vehicleType))
-
-
-
-
 ## Modelling
 ##########Bodo
 ##Different models
 full.model.1 <- price ~ seller + offerType + abtest + vehicleType + yearOfRegistration +
    gearbox + powerPS + model + kilometer + monthOfRegistration + fuelType + brand +
    notRepairedDamage + postalCode + age
-starting.model.1 <- price ~ seller + offerType + abtest + vehicleType + yearOfRegistration +
-   gearbox + powerPS + model + kilometer + monthOfRegistration + fuelType + brand +
-   notRepairedDamage + postalCode + age
-medium.model.1 <- price ~ kilometer + yearOfRegistration + powerPS + postalCode + vehicleType +
-   gearbox + brand + nrOfPictures + notRepairedDamage + fuelType
-simple.model.1 <- price ~ kilometer + yearOfRegistration + vehicleType + brand
+starting.model.1 <- price ~ yearOfRegistration + brand + fuelType + gearbox + vehicleType +
+   powerPS + kilometer + age
+
 
 ##linear modelling
 lm.full.model.1 <- lm(full.model.1, data = df.cars)
@@ -451,3 +437,11 @@ p + geom_line(aes(y = lwr), color = "red", linetype = "dashed")+
 
 
 
+######ipgraph#######
+##A simple example
+users <- data.frame(name=c("Billy", "Harry", "Ruth"))
+relations <- data.frame(from=c("Billy", "Harry", "Harry", "Ruth", "Ruth"), to=c("Harry", "Billy", "Ruth", "Harry", "Billy"))
+
+g <- graph_from_data_frame(relations, directed=TRUE, vertices=users)
+print(g)
+plot(g)
