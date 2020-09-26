@@ -4,6 +4,9 @@ output: html_document
 ---
 
 # 0. Import Packages
+```{r, message=FALSE}
+library(igraph)
+```
 
 # 1. Prepare Data
 
@@ -27,4 +30,32 @@ Graphs are suitable for displaying data from social networks like Facebook and T
 
 ![](simple_graph.png)
 
-## 4.2 A simple example
+## 4.2 Graphs in igraph
+In igraph graphs are represented with the class "igraph". Graphs can be directed (D) as seen in the previous example, or they can be undirected (U). Furthermore, graphs can be named (N), weighted (W) - that means that the edges have different weights - and bipartite (B). A bipartite graph has relations between elements of two sets. In contrast to the conventional graph, the relations do not exist from node to node, but from element in set A to element in set B.
+
+In igraph, typically two parameters indicating the size of the graph are specified to form a graph. The number of vertices indicates how many nodes the graph contains and the number of edges indicates how many edges the graph conains.
+
+**A simple example**
+Now we want to recreate the simple example of the small social network between Billy, Ruth and Harry. For this we use the "igraph" package, which must first be imported. In this example we will build a graph from a data.frame. So first we have to save the data in data.frames before we can form the graph. These are two data.frames. "user" includes the users Billy, Ruth and Harry. "relations" contains the relations between the three users.
+
+```{r, warning=FALSE}
+
+users <- data.frame(name=c("Billy", "Harry", "Ruth"))
+relations <- data.frame(from=c("Billy", "Harry", "Harry", "Ruth", "Ruth"), to=c("Harry", "Billy", "Ruth", "Harry", "Billy"))
+
+g <- graph_from_data_frame(relations, directed=TRUE, vertices=users)
+print(g)
+
+```
+
+As the output shows, it is a directed, named graph with 3 nodes and 5 edges. The nodes each have an attribute: name. In the last line, the relations representing the same image as in the figure of the last section are given. Now we ask ourselves the question how we can display the graph visually so that it looks similar to the figure just mentioned.
+
+```{r, warning=FALSE}
+
+plot(g)
+
+```
+
+We use a simple function that we have often used to create charts: plot. As we see, the graphic corresponds to our little social network between Billy, Ruth and Harry.
+
+## 4.3 A further example
