@@ -95,12 +95,12 @@ In R we build the following model:
 
 ```{r message=FALSE}
 
-complex.model.1 <- price ~ as.factor(yearOfRegistration) +
+complex.model <- price ~ as.factor(yearOfRegistration) +
    s(powerPS) + gearbox * kilometer + age
 
-gam.complex.model.1 <- gam(complex.model.1, data = df.cars)
+gam.complex.model <- gam(complex.model, data = df.cars)
 
-summary(gam.complex.model.1)
+summary(gam.complex.model)
 
 ```
 
