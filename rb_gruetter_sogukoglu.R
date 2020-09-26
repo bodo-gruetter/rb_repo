@@ -261,15 +261,12 @@ summary(lm.age)
 full.model.1 <- price ~ seller + offerType + abtest + vehicleType + yearOfRegistration +
    gearbox + powerPS + model + kilometer + monthOfRegistration + fuelType + brand +
    notRepairedDamage + postalCode + age
-starting.model.1 <- price ~ yearOfRegistration + brand + fuelType + gearbox + vehicleType +
-   powerPS + kilometer + age
+starting.model.1 <- price ~ as.factor(yearOfRegistration) + brand + fuelType + gearbox + vehicleType +
+   s(powerPS) + kilometer + age
 
 
-##linear modelling
-lm.full.model.1 <- lm(full.model.1, data = df.cars)
-lm.starting.model.1 <- lm(starting.model.1, data = df.cars)
-lm.medium.model.1 <- lm(medium.model.1, data = df.cars)
-lm.simple.model.1 <- lm(simple.model.1, data = df.cars)
+##Modelling
+gam.starting.model.1 <- gam(starting.model.1, data = df.cars)
 
 ##Proof
 summary(lm.full.model.1)
@@ -278,7 +275,8 @@ summary(lm.medium.model.1)
 summary(lm.simple.model.1)
 
 ##Updating
-lm.starting.model.1 <- update(lm.starting.model.1, . ~ . - abtest)
+gam.starting.model.1 <- update(gam.starting.model.1, . ~ . - fuelType)
+
 
 final.model.1 <- price ~ seller + offerType + abtest + vehicleType + yearOfRegistration +
    gearbox + powerPS + model + kilometer + monthOfRegistration + fuelType + brand +

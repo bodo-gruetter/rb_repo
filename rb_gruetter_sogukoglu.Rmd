@@ -4,11 +4,22 @@ output: html_document
 ---
 
 # 0. Import Packages
-```{r, message=FALSE}
+```{r, message=FALSE, warning=FALSE}
 library(igraph)
+library(mgcv)
+library(tidyverse)
 ```
 
 # 1. Prepare Data
+MALIK: Dieser Code ist nur dafür da, damit der Rest funktioniert. Kannst du dann so gestalten wie du möchtest.
+```{r}
+df.cars <- read.csv2(file="autos.csv", sep = ",", header = T, na.strings = c("", " ", "NA"))
+df.cars <- na.omit(df.cars)
+df.cars <- df.cars %>% filter(yearOfRegistration > 2010, 
+                              yearOfRegistration < 2016, 
+                              price < 100000)
+df.cars$age <- 2016 - df.cars$yearOfRegistration
+```
 
 # 2. Graphical Analysis
 
@@ -16,9 +27,65 @@ library(igraph)
 ## 3.1 The starting model
 We have now examined a wide variety of variables and their effects on the target variable using a variety of graphs. Now we want to develop a good model from these findings and compare it with models of different degrees of complexity. To achieve this we must first define a starting model that allows us to be further developed.
 
+In the graphical analysis the following categorical variables have shown significant effects on the price of the vehicles: Year of registration, make, oil type, gearbox, vehicle type and unrepaired damage. The unrepaired damage improves the model only minimally, unlike a dummy model. Therefore this factor is not considered in the starting model.
 
+The numeric variables: horsepower, kilometers and age of the vehicles all show significant effects on the vehicle price. While the effects of kilometer and age can be considered linear, PS shows a cubic effect.
 
-## 3.2 Some more complex models
+This results in the following starting model:
+
+**price ~ yearOfRegistration + brand + fuelType + gearbox + vehicleType +
+s(powerPS) + kilometer + age**
+
+In R we build the following model:
+
+```{r message=FALSE}
+
+starting.model.1 <- price ~ as.factor(yearOfRegistration) + brand + fuelType + gearbox + vehicleType +
+   s(powerPS) + kilometer + age
+
+gam.starting.model.1 <- gam(starting.model.1, data = df.cars)
+
+summary(gam.starting.model.1)
+
+```
+
+Relatively quickly something catches our eye. This is when we look at the fuelType factor.In this constellation, no level of fuel type has a significant influence on price. Since our goal is to develop a model that is as good as possible so that all variables have a significant influence on price, we decide to remove this factor from the model.
+
+```{r, message=FALSE}
+
+gam.starting.model.1 <- update(gam.starting.model.1, . ~ . - fuelType)
+
+summary(gam.starting.model.1)$r.squared
+
+```
+
+The result looks much better. If we now look at the R-squared-value, we can see that it gets only slightly worse by omitting fuelType. If we look at vehicleType, we see that only two levels have a highly significant effect on the price. So we check if omitting this variable changes the R-Squared strongly.
+
+```{r, message=FALSE}
+
+gam.starting.model.1 <- update(gam.starting.model.1, . ~ . - vehicleType)
+
+summary(gam.starting.model.1)
+
+```
+
+We see that the R-Squared again deteriorates only very slightly. What we continue to notice, however, is the strong change in the "brand" factor. One example is the Peugeot brand. This no longer has any significant effect. Besides this brand, the significance values of many other brands have also changed. In the next step we will investigate the effect of omitting this factor on the result of the model hypothesis test.
+
+```{r, message=FALSE}
+
+gam.starting.model.1 <- update(gam.starting.model.1, . ~ . - brand)
+
+summary(gam.starting.model.1)
+
+```
+
+The result looks very good. All factors show: There is strong evidence that these have an effect on price. The R-Squared is reduced by almost 10%. Since we want to have a model that is as good as possible but also as simple as possible, this is a good compromise for us. The following model results from our model development:
+
+**price ~ yearOfRegistration + brand + fuelType + gearbox + vehicleType +
+s(powerPS) + kilometer + age**
+
+## 3.2 A more complex model
+
 
 ## 3.3 A comparison of the models
 
