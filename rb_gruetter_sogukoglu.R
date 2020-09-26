@@ -258,29 +258,72 @@ summary(lm.age)
 ## Modelling
 ##########Bodo
 ##interaction effects
-qplot(y = price, x = powerPS, data = df.cars, facets = ~ as.factor(yearOfRegistration), scale_x_log10()) + geom_smooth()
+qplot(y = price, x = kilometer, data = df.cars, facets = ~ as.factor(yearOfRegistration)) + geom_smooth()
+qplot(y = price, x = kilometer, data = df.cars, facets = ~ gearbox) + geom_smooth() ##leichter interaktionseffekt
+qplot(y = price, x = age, data = df.cars, facets = ~ as.factor(yearOfRegistration)) + geom_smooth()
+qplot(y = price, x = age, data = df.cars, facets = ~ gearbox) + geom_smooth()
+
 
 ##Different models
-complex.model.1 <- price ~ seller + offerType + abtest + vehicleType + yearOfRegistration +
-   gearbox + powerPS + model + kilometer + monthOfRegistration + fuelType + brand +
-   notRepairedDamage + postalCode + age
-starting.model.1 <- price ~ as.factor(yearOfRegistration) + brand + fuelType + gearbox + vehicleType +
+complex.model.1 <- price ~ as.factor(yearOfRegistration) + brand + fuelType + vehicleType +
+   s(powerPS) + gearbox * kilometer + age
+
+starting.model.1 <- price ~ as.factor(yearOfRegistration) + fuelType + gearbox + vehicleType +
    s(powerPS) + kilometer + age
 
 
-##Modelling
+##Modelling of the starting model
+starting.model.1 <- price ~ as.factor(yearOfRegistration) + brand + fuelType + gearbox + vehicleType +
+   s(powerPS) + kilometer + age
+
 gam.starting.model.1 <- gam(starting.model.1, data = df.cars)
 
-##Proof
-summary(lm.starting.model.1)
+summary(gam.starting.model.1)
 
-##Updating
-gam.starting.model.1 <- update(gam.starting.model.1, . ~ . - fuelType)
+gam.starting.model.2 <- update(gam.starting.model.1, . ~ . - fuelType)
 
+summary(gam.starting.model.2)$r.squared
 
-final.model.1 <- price ~ seller + offerType + abtest + vehicleType + yearOfRegistration +
-   gearbox + powerPS + model + kilometer + monthOfRegistration + fuelType + brand +
-   notRepairedDamage + postalCode + age
+gam.starting.model.3 <- update(gam.starting.model.2, . ~ . - vehicleType)
+
+summary(gam.starting.model.3)
+
+gam.starting.model.4 <- update(gam.starting.model.3, . ~ . - brand)
+
+summary(gam.starting.model.4)
+
+starting.model <- price ~ as.factor(yearOfRegistration) + gearbox +
+   s(powerPS) + kilometer + age
+
+##Modelling of the more complex model
+complex.model <- price ~ as.factor(yearOfRegistration) +
+   s(powerPS) + gearbox * kilometer + age
+
+gam.complex.model.1 <- gam(complex.model, data = df.cars)
+
+summary(gam.complex.model.1)
+
+##Model comparison
+for(i in 1:10){
+   df.cars.train.id <- sample(seq_len(nrow(df.cars)),size = floor(0.75*nrow(df.cars)))
+   df.cars.train <- df.cars[df.cars.train.id,]
+   df.cars.test <- df.cars[-df.cars.train.id,]
+   
+   #predict data with starting model 1
+   gam.starting.model.train <- gam(starting.model, data = df.cars.train)
+   predicted.starting.model.test <- predict(gam.starting.model.train,
+                                              newdata = df.cars.test)
+   r.squared.starting.model <- cor(predicted.starting.model.test, df.cars.test$price)^2
+   
+   #predict data with starting model 2
+   gam.complex.model.train <- gam(complex.model, data = df.cars.train)
+   predicted.complex.model.test <- predict(gam.complex.model.train,
+                                           newdata = df.cars.test)
+   r.squared.complex.model <- cor(predicted.complex.model.test, df.cars.test$price)^2
+}
+
+mean(r.squared.starting.model)
+mean(r.squared.complex.model)
 
 ##########Malik
 lm.cars <-  lm(df.cars$price ~df.cars$kilometer 
