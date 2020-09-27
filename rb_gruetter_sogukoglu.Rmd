@@ -86,7 +86,7 @@ The result looks very good. All factors show: There is strong evidence that thes
 
 **price ~ yearOfRegistration + gearbox + s(powerPS) + kilometer + age**
 
-## 3.2 A more complex model
+## 3.2 Two more complex models
 Now that we have derived a relatively simple starting model, which considers only a single polynomial effect, we need a more complex model, which we can compare with the simple model. To get an appropriate comparison, we take our starting model and add interactions to it. Thus, this model considers a new level of complexity. The graphical analysis had shown a slight interaction effect between kilometer and gearbox. We would now like to take this into account. The following model results as comparison model:
 
 **price ~ yearOfRegistration + s(powerPS) + gearbox * kilometer + age**
@@ -95,19 +95,45 @@ In R we build the following model:
 
 ```{r message=FALSE}
 
-complex.model <- price ~ as.factor(yearOfRegistration) +
+complex.model.1 <- price ~ as.factor(yearOfRegistration) +
    s(powerPS) + gearbox * kilometer + age
 
-gam.complex.model <- gam(complex.model, data = df.cars)
+gam.complex.model <- gam(complex.model.1, data = df.cars)
 
 summary(gam.complex.model)
 
 ```
 
-Not surprisingly, this model shows a higher R-squared value than the simpler starting model.
+Not surprisingly, this model shows a slightly higher R-squared value than the simpler starting model. However, this is not yet complex enough for a meaningful comparison. Therefore, we are setting up a second model in order to be able to make a better comparison.
+
+To do this, we simply take our initial model, which we had formed using findings from exploratory graphical analysis. In addition, we take into account the interaction that we have already shown in the first more complex model. The following model results:
+
+**price ~ yearOfRegistration + brand + fuelType + vehicleType +
+s(powerPS) + gearbox * kilometer + age**
+
+In R we build the following model:
+
+```{r message=FALSE}
+
+complex.model.2 <- price ~ yearOfRegistration + brand + fuelType + vehicleType +
+s(powerPS) + gearbox * kilometer + age
+
+gam.complex.model.2 <- gam(complex.model.2, data = df.cars)
+
+summary(gam.complex.model.2)
+
+```
 
 ## 3.3 A comparison of the models
 We use a 10-fold cross validation to compare the two models.
+
+```{r message=FALSE}
+##Delete values with just 1 usage -> Problem: in train dataset no usage, in test dataset usage = Error
+df.cars <- droplevels(df.cars[!df.cars$brand == 'trabant',])
+df.cars <- droplevels(df.cars[!df.cars$brand == 'daihatsu',])
+df.cars <- droplevels(df.cars[!df.cars$brand == 'saab',])
+df.cars <- droplevels(df.cars[!df.cars$fuelType == 'andere',])
+```
 
 ```{r message=FALSE}
 
@@ -122,18 +148,26 @@ for(i in 1:10){
                                               newdata = df.cars.test)
    r.squared.starting.model <- cor(predicted.starting.model.test, df.cars.test$price)^2
    
-   #predict data with complex model
-   gam.complex.model.train <- gam(complex.model, data = df.cars.train)
-   predicted.complex.model.test <- predict(gam.complex.model.train,
+   #predict data with complex model 1
+   gam.complex.model.train.1 <- gam(complex.model.1, data = df.cars.train)
+   predicted.complex.model.test.1 <- predict(gam.complex.model.train.1,
                                            newdata = df.cars.test)
-   r.squared.complex.model <- cor(predicted.complex.model.test, df.cars.test$price)^2
+   r.squared.complex.model.1 <- cor(predicted.complex.model.test.1, df.cars.test$price)^2
+   
+   #predict data with complex model 2
+   gam.complex.model.train.2 <- gam(complex.model.2, data = df.cars.train)
+   predicted.complex.model.test.2 <- predict(gam.complex.model.train.2,
+                                           newdata = df.cars.test)
+   r.squared.complex.model.2 <- cor(predicted.complex.model.test.2, df.cars.test$price)^2
 }
 
 mean(r.squared.starting.model)
-mean(r.squared.complex.model)
+mean(r.squared.complex.model.1)
+mean(r.squared.complex.model.2)
 
 ```
 
+All values of R-Squared are rather bad. The starting model closes worst, while the most complex model has the best value.
 
 # 4. The igraph-Package
 ## 4.1 An introduction into the graph theory

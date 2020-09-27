@@ -303,6 +303,8 @@ gam.complex.model.1 <- gam(complex.model, data = df.cars)
 
 summary(gam.complex.model.1)
 
+hist()
+
 ##Model comparison
 for(i in 1:10){
    df.cars.train.id <- sample(seq_len(nrow(df.cars)),size = floor(0.75*nrow(df.cars)))
@@ -486,3 +488,7 @@ relations <- data.frame(from=c("Billy", "Harry", "Harry", "Ruth", "Ruth"), to=c(
 g <- graph_from_data_frame(relations, directed=TRUE, vertices=users)
 print(g)
 plot(g)
+
+##further example
+data(package = "igraphdata")
+View(data(karate))
