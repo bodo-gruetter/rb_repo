@@ -8,6 +8,7 @@ output: html_document
 library(igraph)
 library(mgcv)
 library(tidyverse)
+library(igraphdata)
 ```
 
 # 1. Prepare Data
@@ -208,4 +209,51 @@ plot(g)
 
 We use a simple function that we have often used to create charts: plot. As we see, the graphic corresponds to our little social network between Billy, Ruth and Harry.
 
-## 4.3 A further example
+## 4.3 Some further examples
+**Create your own graph**
+Now we know how easy it is to create a graph from a data frame. But now we want to create our own graph. The principle is the same: Now we use the graph function instead of the graph_from_data_frame() function. The parameters remain the same. First we specify the edges. But now we have to determine the size of the graph ourselves. We pass the parameter n the size 3 and set the parameter directed to FALSE.
+
+```{r, warning=FALSE}
+
+g1 <- graph( edges=c(1,2, 2,3, 3, 1), n=3, directed=F )
+plot(g1)
+
+```
+
+**Create your own graph with **
+Now we want to create a more complex graph. We want to define a set of nodes that are connected to a certain node. For example, a star network can be formed. This is made possible by the : operator. This is made possible by the : operator. In the following code snippet we connect the nodes a,b and c as well as e, f and g with the node d.
+
+```{r, warning=FALSE}
+star <- graph_from_literal(a:b:c--d--e:f:g)
+
+plot(star)
+
+```
+
+With -- we create an indirect edge, with +- or -+ we can create a directed edge to the left or right. ++ creates a symmetrical edge.
+
+```{r, warning=FALSE}
+
+gl <- graph_from_literal(a--b, c+-d, e-+f, g++h)
+
+plot(gl)
+
+```
+
+## 4.4 Use predefined graphs
+In another example we use a pre-defined data set *karate*, which is delivered with the package "igraphdata". The data set already belongs to the igraph class and can therefore already be visualized with the plot() function.
+
+```{r, warning=FALSE}
+
+data("karate")
+plot(karate)
+
+```
+
+The igraphdata package provides the following graphs.
+
+```{r, warning=FALSE}
+
+data(package = "igraphdata")
+
+```

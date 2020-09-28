@@ -5,6 +5,8 @@ library(corrplot)
 library("ggplot2")
 library(mgcv)
 library(igraph)
+library(igraphdata)
+
 
 ### Prepare Data
 
@@ -491,4 +493,5 @@ plot(g)
 
 ##further example
 data(package = "igraphdata")
-View(data(karate))
+data("enron")
+plot(enron)
