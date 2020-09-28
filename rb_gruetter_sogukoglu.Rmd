@@ -249,11 +249,3 @@ data("karate")
 plot(karate)
 
 ```
-
-The igraphdata package provides the following graphs.
-
-```{r, warning=FALSE}
-
-data(package = "igraphdata")
-
-```
