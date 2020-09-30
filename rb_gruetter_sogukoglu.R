@@ -278,19 +278,11 @@ qplot(y = price, x = kilometer, data = df.cars, facets = ~ gearbox) + geom_smoot
 #qplot(y = price, x = age, data = df.cars, facets = ~ gearbox) + geom_smooth()
 
 
-##Different models
-complex.model.1 <- price ~ as.factor(yearOfRegistration) + brand + fuelType + vehicleType +
-   s(powerPS) + gearbox * kilometer + as.factor(age)
-
-starting.model.1 <- price ~ as.factor(yearOfRegistration) + fuelType + gearbox + vehicleType +
-   s(powerPS) + kilometer + as.factor(age)
-
-
 ##Modelling of the starting model
 # yearOfRegistration is not considered anymore because it correlates 1:1 with age
 
-starting.model.1 <- price ~ brand + fuelType + gearbox + vehicleType +
-   s(powerPS) + kilometer + as.factor(age)
+starting.model.1 <- price ~ as.factor(age) + brand + fuelType + gearbox + vehicleType +
+   s(powerPS) + kilometer
 
 gam.starting.model.1 <- gam(starting.model.1, data = df.cars)
 
@@ -298,7 +290,7 @@ summary(gam.starting.model.1)
 
 gam.starting.model.2 <- update(gam.starting.model.1, . ~ . - fuelType)
 
-summary(gam.starting.model.2)$r.squared
+summary(gam.starting.model.2)
 
 gam.starting.model.3 <- update(gam.starting.model.2, . ~ . - vehicleType)
 
@@ -308,41 +300,97 @@ gam.starting.model.4 <- update(gam.starting.model.3, . ~ . - brand)
 
 summary(gam.starting.model.4)
 
+starting.model <- price ~ as.factor(age) + gearbox +
+   s(powerPS) + kilometer
 
-starting.model <- price ~ gearbox +
-   s(powerPS) + kilometer + as.factor(age)
 
-##Modelling of the more complex model
-complex.model <- price ~ 
-   s(powerPS) + gearbox * kilometer + as.factor(age)
+##Modelling of the first complex model
+complex.model.1 <- price ~ as.factor(age) +
+   s(powerPS) + gearbox * kilometer
 
-gam.complex.model.1 <- gam(complex.model, data = df.cars)
+gam.complex.model <- gam(complex.model.1, data = df.cars)
 
-summary(gam.complex.model.1)
+summary(gam.complex.model)
 
-hist()
+##Modelling of the second complex model
+complex.model.2 <- price ~ as.factor(age) + brand + fuelType + vehicleType +
+   s(powerPS) + gearbox * kilometer
 
-##Model comparison
+gam.complex.model.2 <- gam(complex.model.2, data = df.cars)
+
+summary(gam.complex.model.2)
+
+
+
+
+#######Model comparison
+
+##Preparation
+##Delete values with just 1 usage -> Problem: in train dataset no usage, in test dataset usage = Error
+df.cars <- droplevels(df.cars[!df.cars$brand == 'trabant',])
+df.cars <- droplevels(df.cars[!df.cars$brand == 'daihatsu',])
+df.cars <- droplevels(df.cars[!df.cars$brand == 'saab',])
+df.cars <- droplevels(df.cars[!df.cars$fuelType == 'andere',])
+
+##Cross Validation
 for(i in 1:10){
    df.cars.train.id <- sample(seq_len(nrow(df.cars)),size = floor(0.75*nrow(df.cars)))
    df.cars.train <- df.cars[df.cars.train.id,]
    df.cars.test <- df.cars[-df.cars.train.id,]
    
-   #predict data with starting model 1
+   #predict data with starting model
    gam.starting.model.train <- gam(starting.model, data = df.cars.train)
    predicted.starting.model.test <- predict(gam.starting.model.train,
-                                              newdata = df.cars.test)
+                                            newdata = df.cars.test)
    r.squared.starting.model <- cor(predicted.starting.model.test, df.cars.test$price)^2
    
-   #predict data with starting model 2
-   gam.complex.model.train <- gam(complex.model, data = df.cars.train)
-   predicted.complex.model.test <- predict(gam.complex.model.train,
-                                           newdata = df.cars.test)
-   r.squared.complex.model <- cor(predicted.complex.model.test, df.cars.test$price)^2
+   #predict data with complex model 1
+   gam.complex.model.train.1 <- gam(complex.model.1, data = df.cars.train)
+   predicted.complex.model.test.1 <- predict(gam.complex.model.train.1,
+                                             newdata = df.cars.test)
+   r.squared.complex.model.1 <- cor(predicted.complex.model.test.1, df.cars.test$price)^2
+   
+   #predict data with complex model 2
+   gam.complex.model.train.2 <- gam(complex.model.2, data = df.cars.train)
+   predicted.complex.model.test.2 <- predict(gam.complex.model.train.2,
+                                             newdata = df.cars.test)
+   r.squared.complex.model.2 <- cor(predicted.complex.model.test.2, df.cars.test$price)^2
 }
 
 mean(r.squared.starting.model)
-mean(r.squared.complex.model)
+mean(r.squared.complex.model.1)
+mean(r.squared.complex.model.2)
+
+
+######ipgraph#######
+##A simple example
+users <- data.frame(name=c("Billy", "Harry", "Ruth"))
+relations <- data.frame(from=c("Billy", "Harry", "Harry", "Ruth", "Ruth"), to=c("Harry", "Billy", "Ruth", "Harry", "Billy"))
+
+g <- graph_from_data_frame(relations, directed=TRUE, vertices=users)
+print(g)
+plot(g)
+
+###Some further examples
+g.triangle <- graph( edges=c(1,2, 2,3, 3, 1), n=3, directed=F )
+plot(g.triangle)
+
+g.star <- graph_from_literal(a:b:c--d--e:f:g)
+plot(g.star)
+
+g.indirected <- graph_from_literal(a--b)
+plot(g.indirected)
+
+g.directed <- graph_from_literal(a-+b)
+plot(g.directed)
+
+g.symmetrical <- graph_from_literal(a++b)
+plot(g.symmetrical)
+
+##Use predefined graph
+data("karate")
+plot(karate)
+
 
 ##########Malik
 lm.cars <-  lm(df.cars$price ~df.cars$kilometer 
@@ -497,16 +545,4 @@ p + geom_line(aes(y = lwr), color = "red", linetype = "dashed")+
 
 
 
-######ipgraph#######
-##A simple example
-users <- data.frame(name=c("Billy", "Harry", "Ruth"))
-relations <- data.frame(from=c("Billy", "Harry", "Harry", "Ruth", "Ruth"), to=c("Harry", "Billy", "Ruth", "Harry", "Billy"))
 
-g <- graph_from_data_frame(relations, directed=TRUE, vertices=users)
-print(g)
-plot(g)
-
-##further example
-data(package = "igraphdata")
-data("enron")
-plot(enron)

@@ -1,6 +1,8 @@
 ---
 title: "R Bootcamp Assignment"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 # 0. Import Packages
@@ -282,23 +284,23 @@ Between kilometer and fuelType there is actually no interaction according to the
 
 # 3. Modelling
 ## 3.1 The starting model
-We have now examined a wide variety of variables and their effects on the target variable using a variety of graphs. Now we want to develop a good model from these findings and compare it with models of different degrees of complexity. To achieve this we must first define a starting model that allows us to be further developed.
+We have now examined a wide variety of variables and their effects on the target variable *price* using a variety of graphs. Now we want to develop a good model from these findings and compare it with two models of different degrees of complexity. To achieve this we must first define a starting model that we can further develop.
 
-In the graphical analysis the following categorical variables have shown significant effects on the price of the vehicles: Year of registration, make, oil type, gearbox, vehicle type and unrepaired damage. The unrepaired damage improves the model only minimally, unlike a dummy model. Therefore this factor is not considered in the starting model.
+In the graphical analysis the following categorical variables have shown significant effects on the price of the vehicles: yearOfRegistration, age, brand, fuelType, gearbox, vehicleType and notRepairedDamage. The notRepairedDamage improves the model only minimally. Therefore this factor is not considered in our starting model.
 
-The numeric variables: horsepower, kilometers and age of the vehicles all show significant effects on the vehicle price. While the effects of kilometer and age can be considered linear, PS shows a cubic effect.
+The numeric variables: powerPS and kilometers show significant effects on the price. While the effects of kilometer and age can be considered linear, PS shows a cubic effect.
 
 This results in the following starting model:
 
-**price ~ yearOfRegistration + brand + fuelType + gearbox + vehicleType +
-s(powerPS) + kilometer + age**
+**price ~ age + brand + fuelType + gearbox + vehicleType +
+s(powerPS) + kilometer**
 
 In R we build the following model:
 
 ```{r message=FALSE}
 
-starting.model.1 <- price ~ as.factor(yearOfRegistration) + brand + fuelType + gearbox + vehicleType +
-   s(powerPS) + kilometer + age
+starting.model.1 <- price ~ as.factor(age) + brand + fuelType + gearbox + vehicleType +
+   s(powerPS) + kilometer
 
 gam.starting.model.1 <- gam(starting.model.1, data = df.cars)
 
@@ -306,9 +308,9 @@ summary(gam.starting.model.1)
 
 ```
 
-Relatively quickly something catches our eye. This is when we look at the fuelType factor.In this constellation, no level of fuel type has a significant influence on price. Since our goal is to develop a model that is as good as possible so that all variables have a significant influence on price, we decide to remove this factor from the model.
+The R-squared-value is with over 70% quite high. Our starting model seems to be a relatively good model. When we look at the individual predictors, something catches our eye relatively quickly. In this constellation, no level of fuelType has a significant influence on price. Since our goal is to develop a model that is as good as possible so that all variables have a significant influence on price, we decide to remove this factor from the model.
 
-```{r, message=FALSE}
+```{r, message=FALSE, results='hide'}
 
 gam.starting.model.2 <- update(gam.starting.model.1, . ~ . - fuelType)
 
@@ -316,9 +318,9 @@ summary(gam.starting.model.2)
 
 ```
 
-The result looks much better. If we now look at the R-squared-value, we can see that it gets only slightly worse by omitting fuelType. If we look at vehicleType, we see that only two levels have a highly significant effect on the price. So we check if omitting this variable changes the R-Squared strongly.
+The result looks much better. If we now look at the R-squared-value, we can see that it gets only slightly worse by omitting fuelType. If we look now at vehicleType, we see that only two levels have a highly significant effect on the price. So we check if omitting this variable changes the R-Squared strongly.
 
-```{r, message=FALSE}
+```{r, message=FALSE, results='hide'}
 
 gam.starting.model.3 <- update(gam.starting.model.2, . ~ . - vehicleType)
 
@@ -334,26 +336,26 @@ gam.starting.model.4 <- update(gam.starting.model.3, . ~ . - brand)
 
 summary(gam.starting.model.4)
 
-starting.model <- price ~ as.factor(yearOfRegistration) + gearbox +
-   s(powerPS) + kilometer + age
+starting.model <- price ~ as.factor(age) + gearbox +
+   s(powerPS) + kilometer
 
 ```
 
 The result looks very good. All factors show: There is strong evidence that these have an effect on price. The R-Squared is reduced by almost 10%. Since we want to have a model that is as good as possible but also as simple as possible, this is a good compromise for us. The following model results from our model development:
 
-**price ~ yearOfRegistration + gearbox + s(powerPS) + kilometer + age**
+**price ~ age + gearbox + s(powerPS) + kilometer + age**
 
 ## 3.2 Two more complex models
-Now that we have derived a relatively simple starting model, which considers only a single polynomial effect, we need a more complex model, which we can compare with the simple model. To get an appropriate comparison, we take our starting model and add interactions to it. Thus, this model considers a new level of complexity. The graphical analysis had shown a slight interaction effect between kilometer and gearbox. We would now like to take this into account. The following model results as comparison model:
+Now that we have derived a relatively simple starting model, which considers only a single polynomial effect, we need a more complex model, which we can compare with the simple model. To get an appropriate comparison, we take our starting model and add interactions to it. Thus, this model considers a new level of complexity. The graphical analysis had shown a slight interaction effect between kilometer and gearbox. We would now like to take this into account. The following model results as the first comparison model:
 
-**price ~ yearOfRegistration + s(powerPS) + gearbox * kilometer + age**
+**price ~ age + s(powerPS) + gearbox * kilometer**
 
 In R we build the following model:
 
 ```{r message=FALSE}
 
-complex.model.1 <- price ~ as.factor(yearOfRegistration) +
-   s(powerPS) + gearbox * kilometer + age
+complex.model.1 <- price ~ as.factor(age) +
+   s(powerPS) + gearbox * kilometer
 
 gam.complex.model <- gam(complex.model.1, data = df.cars)
 
@@ -363,7 +365,7 @@ summary(gam.complex.model)
 
 Not surprisingly, this model shows a slightly higher R-squared value than the simpler starting model. However, this is not yet complex enough for a meaningful comparison. Therefore, we are setting up a second model in order to be able to make a better comparison.
 
-To do this, we simply take our initial model, which we had formed using findings from exploratory graphical analysis. In addition, we take into account the interaction that we have already shown in the first more complex model. The following model results:
+To do this, we simply take our initial starting model, which we had formed using findings from exploratory graphical analysis. In addition, we take into account the interaction that we have already shown in the first more complex model. The following model results:
 
 **price ~ yearOfRegistration + brand + fuelType + vehicleType +
 s(powerPS) + gearbox * kilometer + age**
@@ -372,8 +374,8 @@ In R we build the following model:
 
 ```{r message=FALSE}
 
-complex.model.2 <- price ~ yearOfRegistration + brand + fuelType + vehicleType +
-s(powerPS) + gearbox * kilometer + age
+complex.model.2 <- price ~ as.factor(age) + brand + fuelType + vehicleType +
+s(powerPS) + gearbox * kilometer
 
 gam.complex.model.2 <- gam(complex.model.2, data = df.cars)
 
@@ -381,18 +383,19 @@ summary(gam.complex.model.2)
 
 ```
 
+The R-Squared is now correspondingly higher. We are curious if this automatically leads to a better result in the prediction of price.
+
 ## 3.3 A comparison of the models
-We use a 10-fold cross validation to compare the two models.
+To compare our models we use the 10-fold cross validation concept. To obtain a meaningful value for the accuracy of the prediction, we split our dataset df.cars into two datasets. A training data set, which contains about 75% of all data and a test data set, which contains the remaining 25% of the data. This ensures that we can train our model on the training data set and then let it make a prediction based on a new, unknown test data set. We train all three models ten times and then make predictions. We use R-Squared as an accuracy indicator, which we have already used to evaluate the models. From the 10 runs we finally take the arithmetic mean.
+
+In our case an error occurred at first. Because certain levels of the categories brand and fuelType have only one value, it can happen that a model is trained on the basis of factors with fewer levels than it is finally predicted. We solve this problem by deleting those levels of the affected factors that occur only once.
 
 ```{r message=FALSE}
-##Delete values with just 1 usage -> Problem: in train dataset no usage, in test dataset usage = Error
+
 df.cars <- droplevels(df.cars[!df.cars$brand == 'trabant',])
 df.cars <- droplevels(df.cars[!df.cars$brand == 'daihatsu',])
 df.cars <- droplevels(df.cars[!df.cars$brand == 'saab',])
 df.cars <- droplevels(df.cars[!df.cars$fuelType == 'andere',])
-```
-
-```{r message=FALSE}
 
 for(i in 1:10){
    df.cars.train.id <- sample(seq_len(nrow(df.cars)),size = floor(0.75*nrow(df.cars)))
@@ -424,7 +427,7 @@ mean(r.squared.complex.model.2)
 
 ```
 
-All values of R-Squared are rather bad. The starting model closes worst, while the most complex model has the best value.
+We get good values for all models. The most complex model concludes best with an accuracy of almost 80%. Surprisingly, the model that does not take into account the interaction between the gearbox and the kilometers - our developed starting model - performs better than the first more complex model. So the decision would have to be made between our starting model and the very complex model. If we only consider the accuracy, we would undoubtedly choose the more complex model. If we also look at the performance, we might also choose the simpler starting model.
 
 # 4. The igraph-Package
 ## 4.1 An introduction into the graph theory
@@ -471,8 +474,8 @@ Now we know how easy it is to create a graph from a data frame. But now we want 
 
 ```{r, warning=FALSE}
 
-g1 <- graph( edges=c(1,2, 2,3, 3, 1), n=3, directed=F )
-plot(g1)
+g.triangle <- graph( edges=c(1,2, 2,3, 3, 1), n=3, directed=F )
+plot(g.triangle)
 
 ```
 
@@ -480,19 +483,34 @@ plot(g1)
 Now we want to create a more complex graph. We want to define a set of nodes that are connected to a certain node. For example, a star network can be formed. This is made possible by the : operator. This is made possible by the : operator. In the following code snippet we connect the nodes a,b and c as well as e, f and g with the node d.
 
 ```{r, warning=FALSE}
-star <- graph_from_literal(a:b:c--d--e:f:g)
-
-plot(star)
+g.star <- graph_from_literal(a:b:c--d--e:f:g)
+plot(g.star)
 
 ```
 
 With -- we create an indirect edge, with +- or -+ we can create a directed edge to the left or right. ++ creates a symmetrical edge.
 
+**indirected edge**
 ```{r, warning=FALSE}
 
-gl <- graph_from_literal(a--b, c+-d, e-+f, g++h)
+g.indirected <- graph_from_literal(a--b)
+plot(g.indirected)
 
-plot(gl)
+```
+
+**directed edge**
+```{r, warning=FALSE}
+
+g.directed <- graph_from_literal(a-+b)
+plot(g.directed)
+
+```
+
+**symmetrical edge**
+```{r, warning=FALSE}
+
+g.symmetrical <- graph_from_literal(a++b)
+plot(g.symmetrical)
 
 ```
 
