@@ -196,15 +196,7 @@ anova(lm.cars, lm.notRepairedDamage)
 
 # because postalCode has many levels it is not suitable for plotting and anova test
 
-
-# ggplot(data = df.cars, aes(y = price, x = as.factor(postalCode))) +
-#    geom_boxplot() + xlab("postal Code") + ylab("price")
-# 
-# lm.postalCode <- lm(price ~ as.factor(postalCode), data = df.cars)
-# anova(lm.cars, lm.postalCode)
-
-
-## age
+ ## age
 ggplot(data = df.cars, aes(y = price, x = as.factor(age))) +
    geom_boxplot() + xlab("age") + ylab("price")
 
@@ -280,22 +272,25 @@ summary(lm.cars.interaction.2)
 # kilometer : gearbox
 qplot(y = price, x = kilometer, data = df.cars, facets = ~ gearbox) + geom_smooth() ##leichter interaktionseffekt
 # age : factor(yearOfRegistration)
-qplot(y = price, x = age, data = df.cars, facets = ~ as.factor(yearOfRegistration)) + geom_smooth()
+# is age not a category?
+# qplot(y = price, x = age, data = df.cars, facets = ~ as.factor(yearOfRegistration)) + geom_smooth()
 # age : gearbox
-qplot(y = price, x = age, data = df.cars, facets = ~ gearbox) + geom_smooth()
+#qplot(y = price, x = age, data = df.cars, facets = ~ gearbox) + geom_smooth()
 
 
 ##Different models
 complex.model.1 <- price ~ as.factor(yearOfRegistration) + brand + fuelType + vehicleType +
-   s(powerPS) + gearbox * kilometer + age
+   s(powerPS) + gearbox * kilometer + as.factor(age)
 
 starting.model.1 <- price ~ as.factor(yearOfRegistration) + fuelType + gearbox + vehicleType +
-   s(powerPS) + kilometer + age
+   s(powerPS) + kilometer + as.factor(age)
 
 
 ##Modelling of the starting model
-starting.model.1 <- price ~ as.factor(yearOfRegistration) + brand + fuelType + gearbox + vehicleType +
-   s(powerPS) + kilometer + age
+# yearOfRegistration is not considered anymore because it correlates 1:1 with age
+
+starting.model.1 <- price ~ brand + fuelType + gearbox + vehicleType +
+   s(powerPS) + kilometer + as.factor(age)
 
 gam.starting.model.1 <- gam(starting.model.1, data = df.cars)
 
@@ -313,12 +308,13 @@ gam.starting.model.4 <- update(gam.starting.model.3, . ~ . - brand)
 
 summary(gam.starting.model.4)
 
-starting.model <- price ~ as.factor(yearOfRegistration) + gearbox +
-   s(powerPS) + kilometer + age
+
+starting.model <- price ~ gearbox +
+   s(powerPS) + kilometer + as.factor(age)
 
 ##Modelling of the more complex model
-complex.model <- price ~ as.factor(yearOfRegistration) +
-   s(powerPS) + gearbox * kilometer + age
+complex.model <- price ~ 
+   s(powerPS) + gearbox * kilometer + as.factor(age)
 
 gam.complex.model.1 <- gam(complex.model, data = df.cars)
 
@@ -471,7 +467,7 @@ plot_cars
 
 
 # predictions
-
+lm.cars.kilometer <- lm(df.cars$price ~df.cars$kilometer)
 
 pred.int <- predict(lm.cars.kilometer, interval = "prediction")
 mydata <- cbind(df.cars, pred.int)
@@ -486,7 +482,7 @@ p + geom_line(aes(y = lwr), color = "red", linetype = "dashed")+
 
 
 
-
+lm.cars.age <- lm(df.cars$price ~df.cars$age)
 
 pred.int <- predict(lm.cars.age, interval = "prediction")
 mydata <- cbind(df.cars, pred.int)
