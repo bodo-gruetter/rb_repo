@@ -396,7 +396,7 @@ summary(gam.starting.model.2)
 
 ```
 
-The result looks much better. If we now look at the R-squared-value, we can see that it gets only slightly worse by omitting fuelType. If we look now at vehicleType, we see that only two levels have a highly significant effect on the price. So we check if omitting this variable changes the R-Squared strongly.
+The result looks much better. If we now look at the R-squared-value, we can see that it gets only slightly worse by omitting fuelType. If we look now at vehicleType, we see that only three levels have a highly significant effect on the price. So we check if omitting this variable changes the R-Squared strongly.
 
 ```{r, message=FALSE, results='hide'}
 
@@ -406,7 +406,7 @@ summary(gam.starting.model.3)
 
 ```
 
-We see that the R-Squared again deteriorates only very slightly. What we continue to notice, however, is the strong change in the "brand" factor. One example is the Peugeot brand. This no longer has any significant effect. Besides this brand, the significance values of many other brands have also changed. In the next step we will investigate the effect of omitting this factor on the result of the model hypothesis test.
+We see that the R-Squared again deteriorates not strongly. What we continue to notice, however, is the strong change in the "brand" factor. One example is the Peugeot brand. This no longer has any significant effect. Besides this brand, the significance values of many other brands have also changed. In the next step we will investigate the effect of omitting this factor on the result of the model hypothesis test.
 
 ```{r, message=FALSE}
 
@@ -419,45 +419,48 @@ starting.model <- price ~ as.factor(age) + gearbox +
 
 ```
 
-The result looks very good. All factors show: There is strong evidence that these have an effect on price. The R-Squared is reduced by almost 10%. Since we want to have a model that is as good as possible but also as simple as possible, this is a good compromise for us. The following model results from our model development:
+The result looks good. All factors show: There is strong evidence that these have an effect on price. The R-Squared is reduced by almost 10%. Since we want to have a model that is as good as possible but also as simple as possible, this is a good compromise for us. The following model results from our model development:
 
-**price ~ age + gearbox + s(powerPS) + kilometer + age**
+**price ~ age + gearbox + s(powerPS) + kilometer**
 
-## 3.2 Two more complex models
-Now that we have derived a relatively simple starting model, which considers only a single polynomial effect, we need a more complex model, which we can compare with the simple model. To get an appropriate comparison, we take our starting model and add interactions to it. Thus, this model considers a new level of complexity. The graphical analysis had shown a slight interaction effect between kilometer and gearbox. We would now like to take this into account. The following model results as the first comparison model:
+## 3.2 Two more models
+Our starting model is already relatively complex. We have already mapped a polynomial effect of powerPS. In order to be able to make a meaningful comparison, we will create two models in this section, which differ significantly from our starting model. First, we model a very simple linear model with only two predictors and a more complex model with even more factors than in the starting model.
 
-**price ~ age + s(powerPS) + gearbox * kilometer**
+A simple model is quickly built. We simply consider which one factor could have an influence on the price, purely logically without including the results of the graphical analysis.  We simply assume that a Porsche brand car is more expensive than a Skoda.
+
+Based on these consideration, we set up the following simple model:
+
+**price ~ brand**
 
 In R we build the following model:
 
 ```{r message=FALSE}
 
-complex.model.1 <- price ~ as.factor(age) +
-   s(powerPS) + gearbox * kilometer
+simple.model <- price ~ brand
 
-gam.complex.model <- gam(complex.model.1, data = df.cars)
+lm.simple.model <- lm(simple.model, data = df.cars)
 
-summary(gam.complex.model)
+summary(lm.simple.model)
 
 ```
 
-Not surprisingly, this model shows a slightly higher R-squared value than the simpler starting model. However, this is not yet complex enough for a meaningful comparison. Therefore, we are setting up a second model in order to be able to make a better comparison.
+Not surprisingly, this model has a lower R-square value than the more complex initial model.
 
-To do this, we simply take our initial starting model, which we had formed using findings from exploratory graphical analysis. In addition, we take into account the interaction that we have already shown in the first more complex model. The following model results:
+Now, we would like to setting up a model that is more complex than our final starting model To do this, we simply take our initial starting model, which we had formed using findings from exploratory graphical analysis. Since the graphical analysis did not show any interactions, it makes no sense to implement any. The following model results:
 
-**price ~ yearOfRegistration + brand + fuelType + vehicleType +
-s(powerPS) + gearbox * kilometer + age**
+**price ~ age + brand + fuelType + vehicleType +
+s(powerPS) + gearbox * kilometer**
 
 In R we build the following model:
 
 ```{r message=FALSE}
 
-complex.model.2 <- price ~ as.factor(age) + brand + fuelType + vehicleType +
+complex.model <- price ~ as.factor(age) + brand + fuelType + vehicleType +
 s(powerPS) + gearbox * kilometer
 
-gam.complex.model.2 <- gam(complex.model.2, data = df.cars)
+gam.complex.model <- gam(complex.model, data = df.cars)
 
-summary(gam.complex.model.2)
+summary(gam.complex.model)
 
 ```
 
@@ -487,25 +490,25 @@ for(i in 1:10){
    r.squared.starting.model <- cor(predicted.starting.model.test, df.cars.test$price)^2
    
    #predict data with complex model 1
-   gam.complex.model.train.1 <- gam(complex.model.1, data = df.cars.train)
-   predicted.complex.model.test.1 <- predict(gam.complex.model.train.1,
+   lm.simple.model.train <- gam(simple.model, data = df.cars.train)
+   predicted.simple.model.test <- predict(lm.simple.model.train,
                                            newdata = df.cars.test)
-   r.squared.complex.model.1 <- cor(predicted.complex.model.test.1, df.cars.test$price)^2
+   r.squared.simple.model <- cor(predicted.simple.model.test, df.cars.test$price)^2
    
    #predict data with complex model 2
-   gam.complex.model.train.2 <- gam(complex.model.2, data = df.cars.train)
-   predicted.complex.model.test.2 <- predict(gam.complex.model.train.2,
+   gam.complex.model.train <- gam(complex.model, data = df.cars.train)
+   predicted.complex.model.test <- predict(gam.complex.model.train,
                                            newdata = df.cars.test)
-   r.squared.complex.model.2 <- cor(predicted.complex.model.test.2, df.cars.test$price)^2
+   r.squared.complex.model <- cor(predicted.complex.model.test, df.cars.test$price)^2
 }
 
 mean(r.squared.starting.model)
-mean(r.squared.complex.model.1)
-mean(r.squared.complex.model.2)
+mean(r.squared.simple.model)
+mean(r.squared.complex.model)
 
 ```
 
-We get good values for all models. The most complex model concludes best with an accuracy of almost 80%. Surprisingly, the model that does not take into account the interaction between the gearbox and the kilometers - our developed starting model - performs better than the first more complex model. So the decision would have to be made between our starting model and the very complex model. If we only consider the accuracy, we would undoubtedly choose the more complex model. If we also look at the performance, we might also choose the simpler starting model.
+We get good values for all models. The complex model concludes best with an accuracy of almost 78%. Our starting model follows with about 13% less accuracy than the more complex model. If we look at the simple model, we can see how the fire factor influences the price of the vehicles. Based on the results, the decision is still made between our initial model and the complex model. If we only consider the accuracy, we would undoubtedly choose the more complex model. If we also look at the performance, we might also choose the simpler starting model.
 
 # 4. Further experimential analyses with cars dataset
 The analysis has now been completed. In this section we want to show further analyses with this used cars-example, using functions that were demonstrated in the R-Bootcamp course. Also other functions we found in the internet are used here.
