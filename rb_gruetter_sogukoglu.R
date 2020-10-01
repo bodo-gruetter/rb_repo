@@ -1,3 +1,32 @@
+# Title: Prediction of the price of second hand cars
+# Goal of this project: The aim of this project was to build a model that can predict 
+# the price of the cars based on certain parameters as precisely as possible.
+# Authors: Bodo Gruetter, Malik Sogukoglu
+
+# Source of dataset: https://www.kaggle.com/orgesleka/used-cars-database
+# Description of variables in the dataset:
+# - dateCrawled: Date when data record was crawled
+# - name: name of the car
+# - seller: information whether seller was "gewerblich"(commercial) or "privat"(private)
+# - offerType: information if car was searched ("Gesuch") or offered ("Angebot") 
+# - price: Price of car
+# - abtest: information if auto has been tested ("test") or the test is still pending ("control").
+# - vehicleType: information about the class of the car
+# - yearOfRegistration: car's year of registration
+# - gearbox: information whether the gearbox is automatic or manual.
+# - powerPS: horsepower of the car
+# - model: model of the car
+# - kilometer: kilometers covered by the car
+# - monthOfRegistration: month of registration of the car
+# - fuelType: information whether fuel type is "diesel" or "benzin".
+# - brand: brand of the car
+# - notRepairedDamage: information whether car has not repaired damage or not
+# - dateCreated; information when data was crawled
+# - nrOfPictures: unknown
+# - postalCode: information where car is at the moment
+# - lastSeen: information when car was last seen.
+   
+
 ### Import packages
 
 library(tidyverse)
@@ -14,11 +43,11 @@ library(igraphdata)
 df.cars <- read.csv2(file="autos.csv", sep = ",", header = T, na.strings = c("", " ", "NA"))
 # remove NA
 
+
 df.cars <- na.omit(df.cars)
 df.cars
 
-# To predict depreciation of cars, it is useful to select "price" as the target variable. 
-# "kilometres" and "yearOfRegistration" could be good independent variables.
+# To predict price of cars "kilometres" and "yearOfRegistration" could be good independent variables.
 
 # With the following plots it is shown how "kilometres" resp. "yearOfRegistration" stand to the variable "price".
 
@@ -46,7 +75,7 @@ boxplot(df.cars$price ~df.cars$yearOfRegistration)
 # columns lastSeen,nrOfPictures,dateCreated,dateCrawled are removed since they obviously do not provide useful information
 df.cars = subset(df.cars, select = -c(lastSeen,nrOfPictures,dateCreated,dateCrawled) )
 
-# the "age" of the car would be an important value to calculate the depreciation. 
+# the "age" of the car would be an important value to calculate the price 
 # Since it was not included in the data set, it is inserted here as a new column. 
 # info: 2016 is the year of data collection
 
@@ -248,6 +277,7 @@ summary(lm.kilometer)
 # based on information from the correlation plot above, there could be interactions between the following variables:
 # - factor(yearOfRegistration) : kilometer
 # - kilometer : fuelType
+# - kilometer : gearbox
 
 # example factor(yearOfRegistration) : kilometer
 qplot(y = price, x = kilometer, data = df.cars, facets = ~ as.factor(yearOfRegistration)) + geom_smooth()
@@ -256,33 +286,49 @@ qplot(y = price, x = kilometer, data = df.cars, facets = ~ fuelType) + geom_smoo
 # In both graphs above, a clear interaction is to be recognized, 
 # since between the categories clear differences are to be determined.
 
-# linear model for interaction factor(yearOfRegistration) : kilometer
+# kilometer : gearbox
+qplot(y = price, x = kilometer, data = df.cars, facets = ~ gearbox) + geom_smooth() 
+# In the above graph is a slight interaction effect between gearbox and kilometer.
+
+## linear model to see interactions
+### linear model for interaction factor(yearOfRegistration) : kilometer
 lm.cars.interaction.1 <- lm(df.cars$price ~ df.cars$kilometer * as.factor(df.cars$yearOfRegistration))
 summary(lm.cars.interaction.1)
 # The linear model above confirms a strong interaction between kilometers and the year 2014
 
-
-# linear model for interaction fuelType : kilometer
+### linear model for interaction fuelType : kilometer
 lm.cars.interaction.2 <- lm(df.cars$price ~ df.cars$kilometer * df.cars$fuelType)
 summary(lm.cars.interaction.2)
 # Between kilometer and fuelType there is actually no interaction according to the linear model above.
 
+### linear model for interaction gearbox : kilometer
+lm.cars.interaction.3 <- lm(df.cars$price ~ df.cars$kilometer * df.cars$gearbox)
+summary(lm.cars.interaction.3)
+# According to the linear model just above, between kilometer and gearbox there is actually a strong interaction.
+
 
 # further interaction analyses:
-# kilometer : gearbox
-qplot(y = price, x = kilometer, data = df.cars, facets = ~ gearbox) + geom_smooth() ##leichter interaktionseffekt
+
 # age : factor(yearOfRegistration)
-# is age not a category?
-# qplot(y = price, x = age, data = df.cars, facets = ~ as.factor(yearOfRegistration)) + geom_smooth()
+qplot(y = price, x = age, data = df.cars, facets = ~ as.factor(yearOfRegistration)) + geom_smooth()
+
 # age : gearbox
-#qplot(y = price, x = age, data = df.cars, facets = ~ gearbox) + geom_smooth()
+qplot(y = price, x = age, data = df.cars, facets = ~ gearbox) + geom_smooth()
+
+
+##Different models
+complex.model.1 <- price ~ as.factor(yearOfRegistration) + brand + fuelType + vehicleType +
+   s(powerPS) + gearbox * kilometer + as.factor(age)
+
+starting.model.1 <- price ~ as.factor(yearOfRegistration) + fuelType + gearbox + vehicleType +
+   s(powerPS) + kilometer + as.factor(age)
 
 
 ##Modelling of the starting model
 # yearOfRegistration is not considered anymore because it correlates 1:1 with age
 
-starting.model.1 <- price ~ as.factor(age) + brand + fuelType + gearbox + vehicleType +
-   s(powerPS) + kilometer
+starting.model.1 <- price ~ brand + fuelType + gearbox + vehicleType +
+   s(powerPS) + kilometer + as.factor(age)
 
 gam.starting.model.1 <- gam(starting.model.1, data = df.cars)
 
@@ -290,7 +336,7 @@ summary(gam.starting.model.1)
 
 gam.starting.model.2 <- update(gam.starting.model.1, . ~ . - fuelType)
 
-summary(gam.starting.model.2)
+summary(gam.starting.model.2)$r.squared
 
 gam.starting.model.3 <- update(gam.starting.model.2, . ~ . - vehicleType)
 
@@ -300,97 +346,41 @@ gam.starting.model.4 <- update(gam.starting.model.3, . ~ . - brand)
 
 summary(gam.starting.model.4)
 
-starting.model <- price ~ as.factor(age) + gearbox +
-   s(powerPS) + kilometer
 
+starting.model <- price ~ gearbox +
+   s(powerPS) + kilometer + as.factor(age)
 
-##Modelling of the first complex model
-complex.model.1 <- price ~ as.factor(age) +
-   s(powerPS) + gearbox * kilometer
+##Modelling of the more complex model
+complex.model <- price ~ 
+   s(powerPS) + gearbox * kilometer + as.factor(age)
 
-gam.complex.model <- gam(complex.model.1, data = df.cars)
+gam.complex.model.1 <- gam(complex.model, data = df.cars)
 
-summary(gam.complex.model)
+summary(gam.complex.model.1)
 
-##Modelling of the second complex model
-complex.model.2 <- price ~ as.factor(age) + brand + fuelType + vehicleType +
-   s(powerPS) + gearbox * kilometer
+hist()
 
-gam.complex.model.2 <- gam(complex.model.2, data = df.cars)
-
-summary(gam.complex.model.2)
-
-
-
-
-#######Model comparison
-
-##Preparation
-##Delete values with just 1 usage -> Problem: in train dataset no usage, in test dataset usage = Error
-df.cars <- droplevels(df.cars[!df.cars$brand == 'trabant',])
-df.cars <- droplevels(df.cars[!df.cars$brand == 'daihatsu',])
-df.cars <- droplevels(df.cars[!df.cars$brand == 'saab',])
-df.cars <- droplevels(df.cars[!df.cars$fuelType == 'andere',])
-
-##Cross Validation
+##Model comparison
 for(i in 1:10){
    df.cars.train.id <- sample(seq_len(nrow(df.cars)),size = floor(0.75*nrow(df.cars)))
    df.cars.train <- df.cars[df.cars.train.id,]
    df.cars.test <- df.cars[-df.cars.train.id,]
    
-   #predict data with starting model
+   #predict data with starting model 1
    gam.starting.model.train <- gam(starting.model, data = df.cars.train)
    predicted.starting.model.test <- predict(gam.starting.model.train,
-                                            newdata = df.cars.test)
+                                              newdata = df.cars.test)
    r.squared.starting.model <- cor(predicted.starting.model.test, df.cars.test$price)^2
    
-   #predict data with complex model 1
-   gam.complex.model.train.1 <- gam(complex.model.1, data = df.cars.train)
-   predicted.complex.model.test.1 <- predict(gam.complex.model.train.1,
-                                             newdata = df.cars.test)
-   r.squared.complex.model.1 <- cor(predicted.complex.model.test.1, df.cars.test$price)^2
-   
-   #predict data with complex model 2
-   gam.complex.model.train.2 <- gam(complex.model.2, data = df.cars.train)
-   predicted.complex.model.test.2 <- predict(gam.complex.model.train.2,
-                                             newdata = df.cars.test)
-   r.squared.complex.model.2 <- cor(predicted.complex.model.test.2, df.cars.test$price)^2
+   #predict data with starting model 2
+   gam.complex.model.train <- gam(complex.model, data = df.cars.train)
+   predicted.complex.model.test <- predict(gam.complex.model.train,
+                                           newdata = df.cars.test)
+   r.squared.complex.model <- cor(predicted.complex.model.test, df.cars.test$price)^2
 }
 
 mean(r.squared.starting.model)
-mean(r.squared.complex.model.1)
-mean(r.squared.complex.model.2)
-
-
-######ipgraph#######
-##A simple example
-users <- data.frame(name=c("Billy", "Harry", "Ruth"))
-relations <- data.frame(from=c("Billy", "Harry", "Harry", "Ruth", "Ruth"), to=c("Harry", "Billy", "Ruth", "Harry", "Billy"))
-
-g <- graph_from_data_frame(relations, directed=TRUE, vertices=users)
-print(g)
-plot(g)
-
-###Some further examples
-g.triangle <- graph( edges=c(1,2, 2,3, 3, 1), n=3, directed=F )
-plot(g.triangle)
-
-g.star <- graph_from_literal(a:b:c--d--e:f:g)
-plot(g.star)
-
-g.indirected <- graph_from_literal(a--b)
-plot(g.indirected)
-
-g.directed <- graph_from_literal(a-+b)
-plot(g.directed)
-
-g.symmetrical <- graph_from_literal(a++b)
-plot(g.symmetrical)
-
-##Use predefined graph
-data("karate")
-plot(karate)
-
+mean(r.squared.complex.model)
 
 ##########Malik
 lm.cars <-  lm(df.cars$price ~df.cars$kilometer 
@@ -545,4 +535,16 @@ p + geom_line(aes(y = lwr), color = "red", linetype = "dashed")+
 
 
 
+######ipgraph#######
+##A simple example
+users <- data.frame(name=c("Billy", "Harry", "Ruth"))
+relations <- data.frame(from=c("Billy", "Harry", "Harry", "Ruth", "Ruth"), to=c("Harry", "Billy", "Ruth", "Harry", "Billy"))
 
+g <- graph_from_data_frame(relations, directed=TRUE, vertices=users)
+print(g)
+plot(g)
+
+##further example
+data(package = "igraphdata")
+data("enron")
+plot(enron)

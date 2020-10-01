@@ -1,9 +1,38 @@
 ---
-title: "R Bootcamp Assignment"
+title: "R Bootcamp Assignment: Prediction of the price of second hand cars"
 output:
   html_document: default
   pdf_document: default
 ---
+
+# Goal of this project: 
+The aim of this project was to build a model that can predict the price of the cars based on certain parameters as precisely as possible.
+## Authors
+Bodo Gruetter, Malik Sogukoglu
+## Source of dataset
+https://www.kaggle.com/orgesleka/used-cars-database
+## Description of variables in the dataset
+ - dateCrawled: Date when data record was crawled
+ - name: name of the car
+ - seller: information whether seller was "gewerblich"(commercial) or "privat"(private)
+ - offerType: information if car was searched ("Gesuch") or offered ("Angebot") 
+ - price: Price of car
+ - abtest: information if auto has been tested ("test") or the test is still pending ("control").
+ - vehicleType: information about the class of the car
+ - yearOfRegistration: car's year of registration
+ - gearbox: information whether the gearbox is automatic or manual.
+ - powerPS: horsepower of the car
+ - model: model of the car
+ - kilometer: kilometers covered by the car
+ - monthOfRegistration: month of registration of the car
+ - fuelType: information whether fuel type is "diesel" or "benzin".
+ - brand: brand of the car
+ - notRepairedDamage: information whether car has not repaired damage or not
+ - dateCreated; information when data was crawled
+ - nrOfPictures: unknown
+ - postalCode: information where car is at the moment
+ - lastSeen: information when car was last seen.
+   
 
 # 0. Import Packages
 ```{r, message=FALSE, warning=FALSE}
@@ -24,7 +53,7 @@ remove NAs:
 df.cars <- na.omit(df.cars)
 df.cars
 ```
-To predict depreciation of cars, it is useful to select "price" as the target variable and "kilometres" as well as "yearOfRegistration" could be good independent variables.
+To predict price of cars, it is useful to select "price" as the target variable and "kilometres" as well as "yearOfRegistration" could be good independent variables.
 
 With the following plots it is shown how "kilometres" resp. "yearOfRegistration" stand to the variable "price".
 ```{r}
@@ -55,7 +84,7 @@ Even if it would influence the price, it would probably be a false correlation.
 df.cars = subset(df.cars, select = -c(lastSeen,nrOfPictures,dateCreated,dateCrawled) )
 ```
 
-The "age" of the car would be an important value to calculate the depreciation. 
+The "age" of the car would be an important value to calculate the price. 
 Since it was not included in the data set, it is inserted here as a new column: 
 (Note: 2016 is the year of data collection)
 ```{r}
@@ -255,32 +284,48 @@ In this section, some analyses regarding possible interactions between an indepe
 Based on information from the correlation plot above, there could be interactions between the following variables:
 - factor(yearOfRegistration) : kilometer
 - kilometer : fuelType
+- kilometer : gearbox
 
-Example factor(yearOfRegistration) : kilometer 
+#### Example plot to see interaction "yearOfRegistration : kilometer"
 ```{r}
 qplot(y = price, x = kilometer, data = df.cars, facets = ~ as.factor(yearOfRegistration)) + geom_smooth()
 ```
-Example kilometer : fuelType
+#### Example plot to see interaction "kilometer : fuelType"
 ```{r}
 qplot(y = price, x = kilometer, data = df.cars, facets = ~ fuelType) + geom_smooth()
 ```
 In both graphs above, a clear interaction is to be recognized, since between the categories clear differences are to be determined.
 
-Linear model for interaction factor(yearOfRegistration) : kilometer
+#### Example plot to see interaction "kilometer : gearbox"
+```{r}
+qplot(y = price, x = kilometer, data = df.cars, facets = ~ gearbox) + geom_smooth()
+```
+In the graph just above, one can see a slight interaction effect between kilometer and gearbox.
+
+Now let's look at the interactions with the help of linear models...
+#### Example linear model for interaction "yearOfRegistration : kilometer"
 ```{r}
 lm.cars.interaction.1 <- lm(df.cars$price ~ df.cars$kilometer * as.factor(df.cars$yearOfRegistration))
 summary(lm.cars.interaction.1)
 ```
 The linear model above confirms a strong interaction between kilometers and the year 2014.
 
-Linear model for interaction fuelType : kilometer
+#### Example linear model for interaction "fuelType : kilometer"
 ```{r}
 lm.cars.interaction.2 <- lm(df.cars$price ~ df.cars$kilometer * df.cars$fuelType)
 summary(lm.cars.interaction.2)
 ```
 Between kilometer and fuelType there is actually no interaction according to the linear model just above.
 
+### Example linear model for interaction "gearbox : kilometer"
+```{r}
+lm.cars.interaction.3 <- lm(df.cars$price ~ df.cars$kilometer * df.cars$gearbox)
+summary(lm.cars.interaction.3)
+```
+According to the linear model just above, between kilometer and gearbox there is actually a strong interaction.
 
+#### Result interaction analysis
+After these interactions have been found, a complex model will be created in the following prediction analysis, which exemplarily takes into account the interaction between "gearbox and kilometer".
 
 # 3. Modelling
 ## 3.1 The starting model
