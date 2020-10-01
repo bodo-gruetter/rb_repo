@@ -508,7 +508,7 @@ mean(r.squared.complex.model)
 
 ```
 
-We get good values for all models. The complex model concludes best with an accuracy of almost 78%. Our starting model follows with about 13% less accuracy than the more complex model. If we look at the simple model, we can see how the fire factor influences the price of the vehicles. Based on the results, the decision is still made between our initial model and the complex model. If we only consider the accuracy, we would undoubtedly choose the more complex model. If we also look at the performance, we might also choose the simpler starting model.
+We get good values for all models. The complex model concludes best with an accuracy of almost 78%. Our starting model follows with about 13% less accuracy than the more complex model. If we look at the simple model, we can see how strongly the brand factor influences the price of the vehicles. Based on the results, the decision is still made between our starting model and the complex model. If we only consider the accuracy, we would undoubtedly choose the more complex model. If we also look at the performance, we might also choose the simpler starting model.
 
 # 4. Further experimential analyses with cars dataset
 The analysis has now been completed. In this section we want to show further analyses with this used cars-example, using functions that were demonstrated in the R-Bootcamp course. Also other functions we found in the internet are used here.
@@ -614,7 +614,7 @@ Graphs are suitable for displaying data from social networks like Facebook and T
 ## 5.2 Graphs in igraph
 In igraph graphs are represented with the class "igraph". Graphs can be directed (D) as seen in the previous example, or they can be undirected (U). Furthermore, graphs can be named (N), weighted (W) - that means that the edges have different weights - and bipartite (B). A bipartite graph has relations between elements of two sets. In contrast to the conventional graph, the relations do not exist from node to node, but from element in set A to element in set B.
 
-In igraph, typically two parameters indicating the size of the graph are specified to form a graph. The number of vertices indicates how many nodes the graph contains and the number of edges indicates how many edges the graph conains.
+In igraph, typically two parameters indicating the size of the graph are specified to form a graph. The number of vertices indicates how many nodes the graph contains and the number of edges indicates how many edges the graph conains. **Attention: in igraph we do not speak of nodes but of vertices!**
 
 **A simple example**
 Now we want to recreate the simple example of the small social network between Billy, Ruth and Harry. For this we use the "igraph" package, which must first be imported. In this example we will build a graph from a data.frame. So first we have to save the data in data.frames before we can form the graph. These are two data.frames. "user" includes the users Billy, Ruth and Harry. "relations" contains the relations between the three users.
@@ -650,7 +650,7 @@ plot(g.triangle)
 
 ```
 
-**Create your own graph with **
+**Create your own graph with different edges**
 Now we want to create a more complex graph. We want to define a set of nodes that are connected to a certain node. For example, a star network can be formed. This is made possible by the : operator. This is made possible by the : operator. In the following code snippet we connect the nodes a,b and c as well as e, f and g with the node d.
 
 ```{r, warning=FALSE}
@@ -685,6 +685,14 @@ plot(g.symmetrical)
 
 ```
 
+**Ring**
+If you want to make a graph in the form of a ring, you can use the function make_ring(). You only have to specify the number of nodes and a simple ring graph is created.
+```{r, warning=FALSE}
+g.ring <- make_ring(10)
+plot(g.ring)
+
+```
+
 ## 5.4 Use predefined graphs
 In another example we use a pre-defined data set *karate*, which is delivered with the package "igraphdata". The data set already belongs to the igraph class and can therefore already be visualized with the plot() function.
 
@@ -694,3 +702,8 @@ data("karate")
 plot(karate)
 
 ```
+
+## 5.5 A short closing word on graphs
+Graphs provide a structure to store data. In contrast to relational databases not only the entities but also the relations are given importance. So graphs are a powerful tool for data storage and allow strong queries, which would not be possible in relational environments at all or can only be reached very laboriously via many joins.
+
+A typical application example is social media. But there are also several other possibilities to use graphs. Very interesting are, for example, the interests of website visitors, which can be easily connected by means of graphs, for example to be able to design and deliver advertising very individually.
