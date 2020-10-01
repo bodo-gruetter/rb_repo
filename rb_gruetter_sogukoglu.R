@@ -36,16 +36,21 @@ library(mgcv)
 library(igraph)
 library(igraphdata)
 
+#####Prepare Environment#####
+# Set seed for reproducability
+set.seed(123)
+# clear environment
+rm(list = ls())
+# set plotting window to default
+par(mfrow = c(1, 1))
 
 ### Prepare Data
 
 # CSV is read whereby zero values are explicitly marked as NAs
 df.cars <- read.csv2(file="autos.csv", sep = ",", header = T, na.strings = c("", " ", "NA"))
 # remove NA
-
-
 df.cars <- na.omit(df.cars)
-df.cars
+
 
 # To predict price of cars "kilometres" and "yearOfRegistration" could be good independent variables.
 
@@ -142,6 +147,21 @@ sapply(df.cars, class)
 # - postalCode
 # - age
 
+# Now that all necessary independent variables have been determined, it is important to ensure that the dependent variable "price" follows a normal distribution: 
+
+hist(df.cars$price)
+
+#...and it does not, so the values in this column are to be squered squared:
+
+df.cars$price <- sqrt(df.cars$price)
+hist(df.cars$price)
+
+#...after squaring, price is now normally distributed and thus suitable for analysis.
+
+hist(df.cars$price)
+df.cars$price <- sqrt(df.cars$price)
+dim(df.cars)
+
 ## year of registration
 
 ggplot(data = df.cars, aes(group=yearOfRegistration, y = price, x = as.factor(yearOfRegistration))) +
@@ -217,7 +237,7 @@ ggplot(data = df.cars, aes(y = price, x = notRepairedDamage)) +
 
 lm.notRepairedDamage <- lm(price ~ notRepairedDamage, data = df.cars)
 anova(lm.cars, lm.notRepairedDamage)
-# the boxplot above clearly shows that the the information whether car has a non-repaired demage or not influences the price. 
+# the boxplot above clearly shows that the information whether car has a non-repaired demage or not influences the price. 
 # the anova test shows that there is a strong evidence that this information influences the price (see p-value) .
 # the anova test shows also that the model only having this information as independent variable has smaller residuals than the dummy model (see RSS).
 
@@ -244,7 +264,7 @@ anova(lm.cars, lm.age)
 ggplot(data = df.cars, mapping = aes(y = price, x = powerPS)) + geom_point(alpha = 0.4) +
    geom_point()  + xlab("PS") +ylab("price") +geom_smooth(method = "gam")
 
-# there is little to recognise. therefore the x axis is logaritised in the following plot:
+# ...there is little to recognise. therefore the x axis is logaritised in the following plot:
 
 ggplot(data = df.cars, mapping = aes(y = price, x = powerPS)) + geom_point(alpha = 0.4) +
    geom_point()  + xlab("PS") +ylab("price") + scale_x_log10() +geom_smooth(method = "gam")
@@ -262,7 +282,7 @@ ggplot(data = df.cars, mapping = aes(y = price, x = kilometer)) + geom_point(alp
    geom_point()  + xlab("kilometer") +ylab("price") + geom_smooth(method = "gam")
 
 # in plot above, one can see that kilometres seems to have a linear effect on price.
-# ...floowing model should confirm that:
+# ...following model should confirm that:
 lm.kilometer <- lm(price ~ kilometer, data = df.cars)
 summary(lm.kilometer)
 # and indeed the p-value shows that "kilometer" has a linear effect on the price
@@ -288,7 +308,8 @@ qplot(y = price, x = kilometer, data = df.cars, facets = ~ fuelType) + geom_smoo
 
 # kilometer : gearbox
 qplot(y = price, x = kilometer, data = df.cars, facets = ~ gearbox) + geom_smooth() 
-# In the above graph is a slight interaction effect between gearbox and kilometer.
+# In the above graph is a slight interaction effect between gearbox and kilometer 
+# since there are no recognizable differences between the categories of gearbox
 
 ## linear model to see interactions
 ### linear model for interaction factor(yearOfRegistration) : kilometer
@@ -304,7 +325,7 @@ summary(lm.cars.interaction.2)
 ### linear model for interaction gearbox : kilometer
 lm.cars.interaction.3 <- lm(df.cars$price ~ df.cars$kilometer * df.cars$gearbox)
 summary(lm.cars.interaction.3)
-# According to the linear model just above, between kilometer and gearbox there is actually a strong interaction.
+# According to the linear model just above, between kilometer and gearbox there is no interaction.
 
 
 # further interaction analyses:
@@ -358,8 +379,6 @@ gam.complex.model.1 <- gam(complex.model, data = df.cars)
 
 summary(gam.complex.model.1)
 
-hist()
-
 ##Model comparison
 for(i in 1:10){
    df.cars.train.id <- sample(seq_len(nrow(df.cars)),size = floor(0.75*nrow(df.cars)))
@@ -382,56 +401,16 @@ for(i in 1:10){
 mean(r.squared.starting.model)
 mean(r.squared.complex.model)
 
-##########Malik
-lm.cars <-  lm(df.cars$price ~df.cars$kilometer 
-               + df.cars$yearOfRegistration
-               + df.cars$powerPS
-               + df.cars$postalCode
-               + df.cars$vehicleType
-               
-               + df.cars$gearbox
-               + df.cars$brand
-               
-               + df.cars$nrOfPictures
-               + df.cars$notRepairedDamage
-               
-               + df.cars$fuelType
-               
-)
-summary(lm.cars)
-
-anova(lm.cars)
-
-#kilometer seems to be an important predictor for price
-
-qqnorm(df.cars$kilometer)
-
-qqline(df.cars$kilometer)
-
-
-qqnorm(df.cars$age)
-
-qqline(df.cars$age)
-
-
-
-lm.cars.kilometer <- lm(df.cars$price ~df.cars$kilometer)
-
-summary(lm.cars.kilometer)
-
-
-lm.cars.age <- lm(df.cars$price ~df.cars$age)
-
-summary(lm.cars.age)
-
-
 
 #some further analyses
 
-#costs per vehcile type
-boxplot(df.cars$price ~ df.cars$vehicleType)
-#t.test(df.cars$price ~ df.cars$vehicleType[df.cars$vehicleType =="cabrio" & "coupe"])
 
+## check normal distribution of residuals of kilometer
+qqnorm(df.cars$kilometer)
+qqline(df.cars$kilometer)
+
+# check normal distribtuion of kilometer
+hist(df.cars$kilometer)
 
 ## calculate average price for cars of different classes
 dfPrizeMean <- df.cars %>%
@@ -461,8 +440,6 @@ plot_cars <- ggplot(
    ggtitle("Price based on Kilometers (per vehicle type)")
 
 plot_cars
-
-#df.cars.suv <- df.cars[df.cars$vehicleType == "suv", ]
 
 
 

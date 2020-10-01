@@ -34,12 +34,26 @@ https://www.kaggle.com/orgesleka/used-cars-database
  - lastSeen: information when car was last seen.
    
 
-# 0. Import Packages
+# 0. Import Packages and prepare environment
 ```{r, message=FALSE, warning=FALSE}
 library(igraph)
 library(mgcv)
 library(tidyverse)
 library(igraphdata)
+```
+
+## Prepare Environment
+Set seed for reproducability:
+```{r, message=FALSE, warning=FALSE}
+set.seed(123)
+```
+Clear environment:
+```{r, message=FALSE, warning=FALSE}
+rm(list = ls())
+```
+Set plotting window to default:
+```{r, message=FALSE, warning=FALSE}
+par(mfrow = c(1, 1))
 ```
 
 # 1. Prepare Data
@@ -51,7 +65,6 @@ df.cars <- read.csv2(file="autos.csv", sep = ",", header = T, na.strings = c("",
 remove NAs:
 ```{r}
 df.cars <- na.omit(df.cars)
-df.cars
 ```
 To predict price of cars, it is useful to select "price" as the target variable and "kilometres" as well as "yearOfRegistration" could be good independent variables.
 
@@ -144,6 +157,18 @@ sapply(df.cars, class)
  - postalCode
  - age
 
+Now that all necessary independent variables have been determined, it is important to ensure that the dependent variable "price" follows a normal distribution: 
+```{r}
+hist(df.cars$price)
+```
+......and it does not, so the values in this column are to be squered squared:
+```{r}
+df.cars$price <- sqrt(df.cars$price)
+hist(df.cars$price)
+```
+... after squaring, price is now normally distributed and thus suitable for analysis.
+
+
 lm.cars below is the dummy model that contains every independent variable. This will be used for comparison with other models:
 ```{r}
 lm.cars <- lm(price ~ 1, data = df.cars)
@@ -224,7 +249,7 @@ ggplot(data = df.cars, aes(y = price, x = notRepairedDamage)) +
 lm.notRepairedDamage <- lm(price ~ notRepairedDamage, data = df.cars)
 anova(lm.cars, lm.notRepairedDamage)
 ```
-- the boxplot above clearly shows that the the information whether car has a non-repaired demage or not influences the price.
+- the boxplot above clearly shows that the information whether car has a non-repaired demage or not influences the price.
 - the anova test shows that there is a strong evidence that this information influences the price (see p-value) .
 - the anova test shows also that the model only having this information as independent variable has smaller residuals than the dummy model (see RSS).
 
@@ -252,7 +277,7 @@ Numeric variables are best explained with a classical plot.
 ggplot(data = df.cars, mapping = aes(y = price, x = powerPS)) + geom_point(alpha = 0.4) +
    geom_point()  + xlab("PS") +ylab("price") +geom_smooth(method = "gam")
 ```
-There is little to recognise. therefore the x axis is logaritised in the following plot:
+...there is little to recognise. therefore the x axis is logaritised in the following plot:
 ```{r}
 ggplot(data = df.cars, mapping = aes(y = price, x = powerPS)) + geom_point(alpha = 0.4) +
    geom_point()  + xlab("PS") +ylab("price") + scale_x_log10() +geom_smooth(method = "gam")
@@ -271,7 +296,7 @@ ggplot(data = df.cars, mapping = aes(y = price, x = kilometer)) + geom_point(alp
    geom_point()  + xlab("kilometer") +ylab("price") + geom_smooth(method = "gam")
 ```
 In plot above, one can see that kilometres seems to have a linear effect on price.
-...floowing model should confirm that:
+...following model should confirm that:
 ```{r}
 lm.kilometer <- lm(price ~ kilometer, data = df.cars)
 summary(lm.kilometer)
@@ -300,7 +325,7 @@ In both graphs above, a clear interaction is to be recognized, since between the
 ```{r}
 qplot(y = price, x = kilometer, data = df.cars, facets = ~ gearbox) + geom_smooth()
 ```
-In the graph just above, one can see a slight interaction effect between kilometer and gearbox.
+In the graph just above, one can see a slight interaction effect between kilometer and gearbox, since there are no recognizable differences between categories of gearbox.
 
 Now let's look at the interactions with the help of linear models...
 #### Example linear model for interaction "yearOfRegistration : kilometer"
@@ -322,7 +347,7 @@ Between kilometer and fuelType there is actually no interaction according to the
 lm.cars.interaction.3 <- lm(df.cars$price ~ df.cars$kilometer * df.cars$gearbox)
 summary(lm.cars.interaction.3)
 ```
-According to the linear model just above, between kilometer and gearbox there is actually a strong interaction.
+According to the linear model just above, between kilometer and gearbox there is no interaction.
 
 #### Result interaction analysis
 After these interactions have been found, a complex model will be created in the following prediction analysis, which exemplarily takes into account the interaction between "gearbox and kilometer".
@@ -474,7 +499,7 @@ mean(r.squared.complex.model.2)
 
 We get good values for all models. The most complex model concludes best with an accuracy of almost 80%. Surprisingly, the model that does not take into account the interaction between the gearbox and the kilometers - our developed starting model - performs better than the first more complex model. So the decision would have to be made between our starting model and the very complex model. If we only consider the accuracy, we would undoubtedly choose the more complex model. If we also look at the performance, we might also choose the simpler starting model.
 
-## 3.4 some further analyses with cars dataset
+## 3.4 further experimential analyses with cars dataset
 The analysis has now been completed. In this section we want to show further analyses with this used cars-example, using functions that were demonstrated in the R-Bootcamp course. Also other functions we found in the internet are used here.
 
 ### 3.4.1 Aggregation functions using streams
@@ -493,7 +518,19 @@ dfPrizeMean <- df.cars %>%
 dfPrizeMean
 ```
 
-### 3.4.2 Colored plots
+### 3.4.2 check for normal distribution
+Check normal distribution of residuals of kilometer:
+```{r message=FALSE}
+qqnorm(df.cars$kilometer)
+qqline(df.cars$kilometer)
+```
+Check normal distribtuion of kilometer:
+```{r message=FALSE}
+hist(df.cars$kilometer)
+```
+...the residuals of kilometer seem to be normal distributen whereas kilometer it self seem to be not so.
+
+### 3.4.3 Colored plots
 Colored plot: "Price based on Kilometers (per vehicle type)"
 ```{r message=FALSE}
 plot_cars <- ggplot(
@@ -526,7 +563,7 @@ plot_cars <- ggplot(
 plot_cars
 ```
 
-### 3.4.3 predictions
+### 3.4.4 predictions
 prediction: kilometer predicts price
 ```{r message=FALSE}
 lm.cars.kilometer <- lm(df.cars$price ~df.cars$kilometer)
