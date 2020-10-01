@@ -1,8 +1,8 @@
 ---
 title: "R Bootcamp Assignment: Prediction of the price of second hand cars"
 output:
-  html_document: default
   pdf_document: default
+  html_document: default
 ---
 
 # Goal of this project: 
@@ -40,6 +40,8 @@ library(igraph)
 library(mgcv)
 library(tidyverse)
 library(igraphdata)
+library(corrplot)
+library("ggplot2")
 ```
 
 ## Prepare Environment
