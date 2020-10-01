@@ -474,6 +474,84 @@ mean(r.squared.complex.model.2)
 
 We get good values for all models. The most complex model concludes best with an accuracy of almost 80%. Surprisingly, the model that does not take into account the interaction between the gearbox and the kilometers - our developed starting model - performs better than the first more complex model. So the decision would have to be made between our starting model and the very complex model. If we only consider the accuracy, we would undoubtedly choose the more complex model. If we also look at the performance, we might also choose the simpler starting model.
 
+## 3.4 some further analyses with cars dataset
+The analysis has now been completed. In this section we want to show further analyses with this used cars-example, using functions that were demonstrated in the R-Bootcamp course. Also other functions we found in the internet are used here.
+
+### 3.4.1 Aggregation functions using streams
+Calculate average price for cars of different classes:
+```{r message=FALSE}
+dfPrizeMean <- df.cars %>%
+   group_by(vehicleType) %>%
+   summarize(meanPrice = mean(price))
+dfPrizeMean
+```
+Calculate average price for cars of different brands:
+```{r message=FALSE}
+dfPrizeMean <- df.cars %>%
+   group_by(brand) %>%
+   summarize(meanPrice = mean(price))
+dfPrizeMean
+```
+
+### 3.4.2 Colored plots
+Colored plot: "Price based on Kilometers (per vehicle type)"
+```{r message=FALSE}
+plot_cars <- ggplot(
+   data = df.cars, 
+   mapping = aes(x = kilometer, 
+                 y = price,
+                 colour = vehicleType)
+)  + geom_point(alpha = 0.4) +
+   geom_smooth(method = "lm", se=FALSE) +
+   scale_color_brewer(type = "qual", palette = "Dark2") +
+   facet_wrap( ~ vehicleType) +
+   scale_x_log10() +
+   ggtitle("Price based on Kilometers (per vehicle type)")
+```
+
+Colored plot: "Price based on year of registration (per vehicle type)"
+```{r message=FALSE}
+plot_cars <- ggplot(
+   data = df.cars, 
+   mapping = aes(x = yearOfRegistration, 
+                 y = price,
+                 colour = vehicleType)
+)  + geom_point(alpha = 0.4) +
+   geom_smooth(method = "lm", se=FALSE) +
+   scale_color_brewer(type = "qual", palette = "Dark2") +
+   facet_wrap( ~ vehicleType) +
+   scale_x_log10() +
+   ggtitle("Price based on year of registration (per vehicle type)")
+
+plot_cars
+```
+
+### 3.4.3 predictions
+prediction: kilometer predicts price
+```{r message=FALSE}
+lm.cars.kilometer <- lm(df.cars$price ~df.cars$kilometer)
+pred.int <- predict(lm.cars.kilometer, interval = "prediction")
+mydata <- cbind(df.cars, pred.int)
+p <- ggplot(mydata, aes(kilometer, price)) +
+   geom_point() +
+   stat_smooth(method = lm)
+p + geom_line(aes(y = lwr), color = "red", linetype = "dashed")+
+   geom_line(aes(y = upr), color = "red", linetype = "dashed")
+```
+
+prediction: age predicts price
+```{r message=FALSE}
+lm.cars.age <- lm(df.cars$price ~df.cars$age)
+pred.int <- predict(lm.cars.age, interval = "prediction")
+mydata <- cbind(df.cars, pred.int)
+p <- ggplot(mydata, aes(age, price)) +
+   geom_point() +
+   stat_smooth(method = lm)
+p + geom_line(aes(y = lwr), color = "red", linetype = "dashed")+
+   geom_line(aes(y = upr), color = "red", linetype = "dashed")
+```
+Age and kilometers predicted price as one can easily see on the graph just above. This was also confirmed with our model in the previous chapter (chap. 3.3).
+
 # 4. The igraph-Package
 ## 4.1 An introduction into the graph theory
 Using the igraph library, graph algorithms can be easily implemented in R, large graphs can be handled and visualized quickly. Before we can do this, some terms in the context of graphs must be defined. The theoretical basis of graphs is graph theory. It is a branch of mathematics.

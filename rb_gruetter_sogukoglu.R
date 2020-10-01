@@ -426,24 +426,6 @@ summary(lm.cars.age)
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 #some further analyses
 
 #costs per vehcile type
@@ -451,12 +433,13 @@ boxplot(df.cars$price ~ df.cars$vehicleType)
 #t.test(df.cars$price ~ df.cars$vehicleType[df.cars$vehicleType =="cabrio" & "coupe"])
 
 
-## additional section
+## calculate average price for cars of different classes
 dfPrizeMean <- df.cars %>%
    group_by(vehicleType) %>%
    summarize(meanPrice = mean(price))
 dfPrizeMean
 
+## calculate average price for cars of different brands
 dfPrizeMean <- df.cars %>%
    group_by(brand) %>%
    summarize(meanPrice = mean(price))
@@ -464,7 +447,7 @@ dfPrizeMean
 
 
 
-# "Price based on Kilometers (per vehicle type)"
+# Colored plot: "Price based on Kilometers (per vehicle type)"
 plot_cars <- ggplot(
    data = df.cars, 
    mapping = aes(x = kilometer, 
@@ -477,12 +460,14 @@ plot_cars <- ggplot(
    scale_x_log10() +
    ggtitle("Price based on Kilometers (per vehicle type)")
 
+plot_cars
+
 #df.cars.suv <- df.cars[df.cars$vehicleType == "suv", ]
 
 
 
 
-# "Price based on year of registration (per vehicle type)"
+# Colored plot: "Price based on year of registration (per vehicle type)"
 
 plot_cars <- ggplot(
    data = df.cars, 
@@ -500,36 +485,24 @@ plot_cars
 
 
 
-plot_cars
-
-
-
-# predictions
+# prediction: kilometer predicts price
 lm.cars.kilometer <- lm(df.cars$price ~df.cars$kilometer)
-
 pred.int <- predict(lm.cars.kilometer, interval = "prediction")
 mydata <- cbind(df.cars, pred.int)
-
-
 p <- ggplot(mydata, aes(kilometer, price)) +
    geom_point() +
    stat_smooth(method = lm)
-# 3. Add prediction intervals
 p + geom_line(aes(y = lwr), color = "red", linetype = "dashed")+
    geom_line(aes(y = upr), color = "red", linetype = "dashed")
 
 
-
+# prediction: age predicts price
 lm.cars.age <- lm(df.cars$price ~df.cars$age)
-
 pred.int <- predict(lm.cars.age, interval = "prediction")
 mydata <- cbind(df.cars, pred.int)
-# 2. Regression line + confidence intervals
-
 p <- ggplot(mydata, aes(age, price)) +
    geom_point() +
    stat_smooth(method = lm)
-# 3. Add prediction intervals
 p + geom_line(aes(y = lwr), color = "red", linetype = "dashed")+
    geom_line(aes(y = upr), color = "red", linetype = "dashed")
 
