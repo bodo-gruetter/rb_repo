@@ -1,16 +1,19 @@
 ---
 title: "R Bootcamp Assignment: Prediction of the price of second hand cars"
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 ---
 
-# Goal of this project: 
+## Goal
 The aim of this project was to build a model that can predict the price of the cars based on certain parameters as precisely as possible.
+
 ## Authors
 Bodo Gruetter, Malik Sogukoglu
+
 ## Source of dataset
 https://www.kaggle.com/orgesleka/used-cars-database
+
 ## Description of variables in the dataset
  - dateCrawled: Date when data record was crawled
  - name: name of the car
@@ -118,7 +121,7 @@ apply(df.cars, MARGIN = 2,
 
 We assumed that "yearOfRegistration" and "kilometer" strongly influence the "price". With the following correlation analyis we want to see which variables actually influence the price.
 
-## Correlation analysis 
+## 2.1. Correlation analysis 
 The following correlation plot shows which variables influence price:
 ```{r}
 predictors = c(colnames(df.cars))
@@ -141,7 +144,7 @@ have a certain influence on the price. So, there are also variables that we did 
 
 In the following analysis we will take a closer look at the effects of the categorical and numerical variables that influence the price according to the correlation plot.
 
-## Categorical variables
+## 2.2. Categorical variables
 ...lets start with the categorical values. Those are best explaint with boxplots and Anova-tests. 
 
 lets see which are the categorical:
@@ -258,7 +261,7 @@ anova(lm.cars, lm.notRepairedDamage)
 ### postalCode
 Because postalCode has many levels it is not suitable for plotting and anova test
 
-## age
+### age
 ```{r}
 ggplot(data = df.cars, aes(y = price, x = as.factor(age))) +
    geom_boxplot() + xlab("age") + ylab("price")
@@ -268,7 +271,7 @@ anova(lm.cars, lm.age)
 ```
 - The above plot and model (see p-value) show that age has a linear influence on price. 
 
-## Numerical variables
+## 2.3. Numerical variables
 Lets go on with the numeric variables which are the following:
  - powerPS
  - kilometer
@@ -305,7 +308,7 @@ summary(lm.kilometer)
 ```
 ...and indeed the p-value shows that "kilometer" has a linear effect on the price.
 
-### Interaction analysis
+## 2.3. Interaction analysis
 In this section, some analyses regarding possible interactions between an independent categorical variables and a numerical variable are processed.
 
 Based on information from the correlation plot above, there could be interactions between the following variables:
@@ -313,31 +316,33 @@ Based on information from the correlation plot above, there could be interaction
 - kilometer : fuelType
 - kilometer : gearbox
 
-#### Example plot to see interaction "yearOfRegistration : kilometer"
+### Example plot to see interaction "yearOfRegistration : kilometer"
 ```{r}
 qplot(y = price, x = kilometer, data = df.cars, facets = ~ as.factor(yearOfRegistration)) + geom_smooth()
 ```
-#### Example plot to see interaction "kilometer : fuelType"
+
+### Example plot to see interaction "kilometer : fuelType"
 ```{r}
 qplot(y = price, x = kilometer, data = df.cars, facets = ~ fuelType) + geom_smooth()
 ```
 In both graphs above, a clear interaction is to be recognized, since between the categories clear differences are to be determined.
 
-#### Example plot to see interaction "kilometer : gearbox"
+### Example plot to see interaction "kilometer : gearbox"
 ```{r}
 qplot(y = price, x = kilometer, data = df.cars, facets = ~ gearbox) + geom_smooth()
 ```
 In the graph just above, one can see a slight interaction effect between kilometer and gearbox, since there are no recognizable differences between categories of gearbox.
 
 Now let's look at the interactions with the help of linear models...
-#### Example linear model for interaction "yearOfRegistration : kilometer"
+
+### Example linear model for interaction "yearOfRegistration : kilometer"
 ```{r}
 lm.cars.interaction.1 <- lm(df.cars$price ~ df.cars$kilometer * as.factor(df.cars$yearOfRegistration))
 summary(lm.cars.interaction.1)
 ```
 The linear model above confirms a strong interaction between kilometers and the year 2014.
 
-#### Example linear model for interaction "fuelType : kilometer"
+### Example linear model for interaction "fuelType : kilometer"
 ```{r}
 lm.cars.interaction.2 <- lm(df.cars$price ~ df.cars$kilometer * df.cars$fuelType)
 summary(lm.cars.interaction.2)
@@ -351,10 +356,11 @@ summary(lm.cars.interaction.3)
 ```
 According to the linear model just above, between kilometer and gearbox there is no interaction.
 
-#### Result interaction analysis
+### Result interaction analysis
 After these interactions have been found, a complex model will be created in the following prediction analysis, which exemplarily takes into account the interaction between "gearbox and kilometer".
 
 # 3. Modelling
+
 ## 3.1 The starting model
 We have now examined a wide variety of variables and their effects on the target variable *price* using a variety of graphs. Now we want to develop a good model from these findings and compare it with two models of different degrees of complexity. To achieve this we must first define a starting model that we can further develop.
 
@@ -501,10 +507,10 @@ mean(r.squared.complex.model.2)
 
 We get good values for all models. The most complex model concludes best with an accuracy of almost 80%. Surprisingly, the model that does not take into account the interaction between the gearbox and the kilometers - our developed starting model - performs better than the first more complex model. So the decision would have to be made between our starting model and the very complex model. If we only consider the accuracy, we would undoubtedly choose the more complex model. If we also look at the performance, we might also choose the simpler starting model.
 
-## 3.4 further experimential analyses with cars dataset
+# 4. Further experimential analyses with cars dataset
 The analysis has now been completed. In this section we want to show further analyses with this used cars-example, using functions that were demonstrated in the R-Bootcamp course. Also other functions we found in the internet are used here.
 
-### 3.4.1 Aggregation functions using streams
+## 4.1. Aggregation functions using streams
 Calculate average price for cars of different classes:
 ```{r message=FALSE}
 dfPrizeMean <- df.cars %>%
@@ -520,7 +526,7 @@ dfPrizeMean <- df.cars %>%
 dfPrizeMean
 ```
 
-### 3.4.2 check for normal distribution
+## 4.2. check for normal distribution
 Check normal distribution of residuals of kilometer:
 ```{r message=FALSE}
 qqnorm(df.cars$kilometer)
@@ -532,7 +538,7 @@ hist(df.cars$kilometer)
 ```
 ...the residuals of kilometer seem to be normal distributen whereas kilometer it self seem to be not so.
 
-### 3.4.3 Colored plots
+## 4.3. Colored plots
 Colored plot: "Price based on Kilometers (per vehicle type)"
 ```{r message=FALSE}
 plot_cars <- ggplot(
@@ -565,7 +571,7 @@ plot_cars <- ggplot(
 plot_cars
 ```
 
-### 3.4.4 predictions
+## 4.4. Predictions
 prediction: kilometer predicts price
 ```{r message=FALSE}
 lm.cars.kilometer <- lm(df.cars$price ~df.cars$kilometer)
@@ -591,8 +597,8 @@ p + geom_line(aes(y = lwr), color = "red", linetype = "dashed")+
 ```
 Age and kilometers predicted price as one can easily see on the graph just above. This was also confirmed with our model in the previous chapter (chap. 3.3).
 
-# 4. The igraph-Package
-## 4.1 An introduction into the graph theory
+# 5. The igraph-Package
+## 5.1 An introduction into the graph theory
 Using the igraph library, graph algorithms can be easily implemented in R, large graphs can be handled and visualized quickly. Before we can do this, some terms in the context of graphs must be defined. The theoretical basis of graphs is graph theory. It is a branch of mathematics.
 
 A *graph* is a network of relationships between different entities from the real world. These entities are represented in the graph as *nodes*. The nodes have *properties* that describe the corresponding object in the real world. They make it an individual. Nodes are related to each other. They are connected by *edges*.
@@ -602,7 +608,7 @@ Graphs are suitable for displaying data from social networks like Facebook and T
 
 ![](simple_graph.png)
 
-## 4.2 Graphs in igraph
+## 5.2 Graphs in igraph
 In igraph graphs are represented with the class "igraph". Graphs can be directed (D) as seen in the previous example, or they can be undirected (U). Furthermore, graphs can be named (N), weighted (W) - that means that the edges have different weights - and bipartite (B). A bipartite graph has relations between elements of two sets. In contrast to the conventional graph, the relations do not exist from node to node, but from element in set A to element in set B.
 
 In igraph, typically two parameters indicating the size of the graph are specified to form a graph. The number of vertices indicates how many nodes the graph contains and the number of edges indicates how many edges the graph conains.
@@ -630,7 +636,7 @@ plot(g)
 
 We use a simple function that we have often used to create charts: plot. As we see, the graphic corresponds to our little social network between Billy, Ruth and Harry.
 
-## 4.3 Some further examples
+## 5.3 Some further examples
 **Create your own graph**
 Now we know how easy it is to create a graph from a data frame. But now we want to create our own graph. The principle is the same: Now we use the graph function instead of the graph_from_data_frame() function. The parameters remain the same. First we specify the edges. But now we have to determine the size of the graph ourselves. We pass the parameter n the size 3 and set the parameter directed to FALSE.
 
@@ -676,7 +682,7 @@ plot(g.symmetrical)
 
 ```
 
-## 4.4 Use predefined graphs
+## 5.4 Use predefined graphs
 In another example we use a pre-defined data set *karate*, which is delivered with the package "igraphdata". The data set already belongs to the igraph class and can therefore already be visualized with the plot() function.
 
 ```{r, warning=FALSE}
