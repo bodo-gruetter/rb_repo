@@ -356,9 +356,6 @@ summary(lm.cars.interaction.3)
 ```
 According to the linear model just above, between kilometer and gearbox there is no interaction.
 
-### Result interaction analysis
-After these interactions have been found, a complex model will be created in the following prediction analysis, which exemplarily takes into account the interaction between "gearbox and kilometer".
-
 # 3. Modelling
 
 ## 3.1 The starting model
@@ -449,14 +446,14 @@ Not surprisingly, this model has a lower R-square value than the more complex in
 Now, we would like to setting up a model that is more complex than our final starting model To do this, we simply take our initial starting model, which we had formed using findings from exploratory graphical analysis. Since the graphical analysis did not show any interactions, it makes no sense to implement any. The following model results:
 
 **price ~ age + brand + fuelType + vehicleType +
-s(powerPS) + gearbox * kilometer**
+s(powerPS) + gearbox + kilometer**
 
 In R we build the following model:
 
 ```{r message=FALSE}
 
 complex.model <- price ~ as.factor(age) + brand + fuelType + vehicleType +
-s(powerPS) + gearbox * kilometer
+s(powerPS) + gearbox + kilometer
 
 gam.complex.model <- gam(complex.model, data = df.cars)
 
@@ -489,13 +486,13 @@ for(i in 1:10){
                                               newdata = df.cars.test)
    r.squared.starting.model <- cor(predicted.starting.model.test, df.cars.test$price)^2
    
-   #predict data with complex model 1
+   #predict data with simple model
    lm.simple.model.train <- gam(simple.model, data = df.cars.train)
    predicted.simple.model.test <- predict(lm.simple.model.train,
                                            newdata = df.cars.test)
    r.squared.simple.model <- cor(predicted.simple.model.test, df.cars.test$price)^2
    
-   #predict data with complex model 2
+   #predict data with complex model
    gam.complex.model.train <- gam(complex.model, data = df.cars.train)
    predicted.complex.model.test <- predict(gam.complex.model.train,
                                            newdata = df.cars.test)

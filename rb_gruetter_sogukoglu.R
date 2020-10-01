@@ -425,7 +425,6 @@ dfPrizeMean <- df.cars %>%
 dfPrizeMean
 
 
-
 # Colored plot: "Price based on Kilometers (per vehicle type)"
 plot_cars <- ggplot(
    data = df.cars, 
@@ -459,7 +458,6 @@ plot_cars <- ggplot(
    ggtitle("Price based on year of registration (per vehicle type)")
 
 plot_cars
-
 
 
 # prediction: kilometer predicts price
