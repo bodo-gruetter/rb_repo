@@ -25,9 +25,19 @@
 # - nrOfPictures: unknown
 # - postalCode: information where car is at the moment
 # - lastSeen: information when car was last seen.
-   
 
-### Import packages
+#####Functions#####
+##returns the rsquared for gam
+##create function
+getR2 <- function(gam){
+   ##calculate R2
+   R2 <- 1-((sum(residuals(gam)^2))/
+               (sum((gam$y - mean(gam$y))^2)))
+   ##Return R2
+   return(paste("R-Squared: ", R2))
+}
+
+#####Import packages#####
 
 library(tidyverse)
 library(corrplot)
@@ -96,7 +106,7 @@ apply(df.cars, MARGIN = 2,
 
 
 
-### Graphical Analysis
+#####Graphical Analysis#####
 
 
 
@@ -290,8 +300,7 @@ summary(lm.kilometer)
 
 
 
-## Modelling
-##########Bodo
+#####Modelling#####
 ##interaction effects: analyses regarding possible interactions between a independent categorical variables and a numerical variable
 
 # based on information from the correlation plot above, there could be interactions between the following variables:
@@ -346,65 +355,103 @@ starting.model.1 <- price ~ as.factor(yearOfRegistration) + fuelType + gearbox +
 
 
 ##Modelling of the starting model
+# storing our starting model based on the findings of the graphical analysis.
 # yearOfRegistration is not considered anymore because it correlates 1:1 with age
+starting.model.1 <- price ~ as.factor(age) + brand + fuelType + gearbox + vehicleType +
+   s(powerPS) + kilometer
 
-starting.model.1 <- price ~ brand + fuelType + gearbox + vehicleType +
-   s(powerPS) + kilometer + as.factor(age)
-
+# gam fitting
 gam.starting.model.1 <- gam(starting.model.1, data = df.cars)
-
 summary(gam.starting.model.1)
 
+# updating the starting model by omitting the fuelType
 gam.starting.model.2 <- update(gam.starting.model.1, . ~ . - fuelType)
-
 summary(gam.starting.model.2)$r.squared
 
+# updating the starting model by omitting the vehicleType
 gam.starting.model.3 <- update(gam.starting.model.2, . ~ . - vehicleType)
-
 summary(gam.starting.model.3)
 
+# updating the starting model by omitting the brand
 gam.starting.model.4 <- update(gam.starting.model.3, . ~ . - brand)
-
 summary(gam.starting.model.4)
 
+# storing our developed starting model
+starting.model <- price ~ as.factor(age) + gearbox +
+   s(powerPS) + kilometer
 
-starting.model <- price ~ gearbox +
-   s(powerPS) + kilometer + as.factor(age)
+##Modelling of our simple Model
+# storing our simple model with one predictor
+simple.model <- price ~ brand
+
+#lm fitting
+lm.simple.model <- lm(simple.model, data = df.cars)
+summary(lm.simple.model)
 
 ##Modelling of the more complex model
-complex.model <- price ~ 
-   s(powerPS) + gearbox * kilometer + as.factor(age)
+#Storing our complex model
+complex.model <- price ~ as.factor(age) + brand + fuelType + vehicleType +
+   s(powerPS) + gearbox + kilometer
 
-gam.complex.model.1 <- gam(complex.model, data = df.cars)
+#gam fitting
+gam.complex.model <- gam(complex.model, data = df.cars)
+summary(gam.complex.model)
 
-summary(gam.complex.model.1)
 
-##Model comparison
+
+
+
+#####Model comparison#####
+#drop levels that might be unused in train data set to prevent an error
+df.cars <- droplevels(df.cars[!df.cars$brand == 'trabant',])
+df.cars <- droplevels(df.cars[!df.cars$brand == 'daihatsu',])
+df.cars <- droplevels(df.cars[!df.cars$brand == 'saab',])
+df.cars <- droplevels(df.cars[!df.cars$fuelType == 'andere',])
+
+# 10-fold CROSS VALIDATION
 for(i in 1:10){
+   # build a 75%-train and a 25%-test data set
    df.cars.train.id <- sample(seq_len(nrow(df.cars)),size = floor(0.75*nrow(df.cars)))
    df.cars.train <- df.cars[df.cars.train.id,]
    df.cars.test <- df.cars[-df.cars.train.id,]
    
-   #predict data with starting model 1
+   #train starting model as a gam
    gam.starting.model.train <- gam(starting.model, data = df.cars.train)
+   #predict data with starting model
    predicted.starting.model.test <- predict(gam.starting.model.train,
-                                              newdata = df.cars.test)
+                                            newdata = df.cars.test)
+   #calculate the r squared of the starting model
    r.squared.starting.model <- cor(predicted.starting.model.test, df.cars.test$price)^2
    
-   #predict data with starting model 2
+   #train simple model as a lm
+   lm.simple.model.train <- gam(simple.model, data = df.cars.train)
+   #predict data with simple model
+   predicted.simple.model.test <- predict(lm.simple.model.train,
+                                          newdata = df.cars.test)
+   #calculate the r squared of the simple model
+   r.squared.simple.model <- cor(predicted.simple.model.test, df.cars.test$price)^2
+   
+   #train complex model as a gam
    gam.complex.model.train <- gam(complex.model, data = df.cars.train)
+   #predict data with complex model
    predicted.complex.model.test <- predict(gam.complex.model.train,
                                            newdata = df.cars.test)
+   #calculate the r squared of the complex model
    r.squared.complex.model <- cor(predicted.complex.model.test, df.cars.test$price)^2
 }
-
+#calculate the arithmetic mean of the r-squared values of the tree
+#models for comparison
 mean(r.squared.starting.model)
+mean(r.squared.simple.model)
 mean(r.squared.complex.model)
 
 
-#some further analyses
 
 
+
+
+
+#####some further analyses#####
 ## check normal distribution of residuals of kilometer
 qqnorm(df.cars$kilometer)
 qqline(df.cars$kilometer)
@@ -483,16 +530,49 @@ p + geom_line(aes(y = lwr), color = "red", linetype = "dashed")+
 
 
 
+
+
+
+
 ######ipgraph#######
 ##A simple example
+#create dataframe with entities
 users <- data.frame(name=c("Billy", "Harry", "Ruth"))
+#create dataframe with relationships between the entities
 relations <- data.frame(from=c("Billy", "Harry", "Harry", "Ruth", "Ruth"), to=c("Harry", "Billy", "Ruth", "Harry", "Billy"))
 
+#build a graph from a dataframe
 g <- graph_from_data_frame(relations, directed=TRUE, vertices=users)
+#print result
 print(g)
+#plot result
 plot(g)
 
-##further example
+#build a graph with the same shape of our simple example, but directly
+g.triangle <- graph( edges=c(1,2, 2,3, 3, 1), n=3, directed=F )
+plot(g.triangle)
+
+#build a star shaped graph
+g.star <- graph_from_literal(a:b:c--d--e:f:g)
+plot(g.star)
+
+#build a two vertices graph with indirected edge
+g.indirected <- graph_from_literal(a--b)
+plot(g.indirected)
+
+#build a two vertices graph with directed edge in one direction
+g.directed <- graph_from_literal(a-+b)
+plot(g.directed)
+
+#build a two vertices graph with directed edge in both direction
+g.symmetrical <- graph_from_literal(a++b)
+plot(g.symmetrical)
+
+#build a ring shaped graph
+g.ring <- make_ring(10)
+plot(g.ring)
+
+#use predefined graphs
 data(package = "igraphdata")
-data("enron")
-plot(enron)
+data("karate")
+plot(karate)

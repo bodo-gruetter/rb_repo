@@ -1,8 +1,9 @@
 ---
 title: "R Bootcamp Assignment: Prediction of the price of second hand cars"
 output:
-  html_document: default
-  pdf_document: default
+  html_document:
+    toc: true
+    theme: united
 ---
 
 ## Goal
@@ -357,8 +358,23 @@ summary(lm.cars.interaction.3)
 According to the linear model just above, between kilometer and gearbox there is no interaction.
 
 # 3. Modelling
+## 3.1 The calculation of R-Squared
 
-## 3.1 The starting model
+For the comparison of our models we will use the r-squared value. The R-squared value describes how much of the variation of price is explained by the modelled predictors.
+
+Because it is not possible to access this value using the GAM function in the Summary, we have written a function which calculates and returns the R-Squared. So we don't always have to output the whole content of Summary.
+
+```{r message=FALSE}
+
+getR2 <- function(gam){
+   R2 <- 1-((sum(residuals(gam)^2))/
+               (sum((gam$y - mean(gam$y))^2)))
+   return(paste("R-Squared: ", R2))
+}
+
+```
+
+## 3.2 The starting model
 We have now examined a wide variety of variables and their effects on the target variable *price* using a variety of graphs. Now we want to develop a good model from these findings and compare it with two models of different degrees of complexity. To achieve this we must first define a starting model that we can further develop.
 
 In the graphical analysis the following categorical variables have shown significant effects on the price of the vehicles: yearOfRegistration, age, brand, fuelType, gearbox, vehicleType and notRepairedDamage. The notRepairedDamage improves the model only minimally. Therefore this factor is not considered in our starting model.
@@ -385,11 +401,13 @@ summary(gam.starting.model.1)
 
 The R-squared-value is with over 70% quite high. Our starting model seems to be a relatively good model. When we look at the individual predictors, something catches our eye relatively quickly. In this constellation, no level of fuelType has a significant influence on price. Since our goal is to develop a model that is as good as possible so that all variables have a significant influence on price, we decide to remove this factor from the model.
 
+*For reasons of reading flow, we will from now on output only the R-squared value.*
+
 ```{r, message=FALSE, results='hide'}
 
 gam.starting.model.2 <- update(gam.starting.model.1, . ~ . - fuelType)
 
-summary(gam.starting.model.2)
+getR2(gam.starting.model.2)
 
 ```
 
@@ -399,7 +417,7 @@ The result looks much better. If we now look at the R-squared-value, we can see 
 
 gam.starting.model.3 <- update(gam.starting.model.2, . ~ . - vehicleType)
 
-summary(gam.starting.model.3)
+getR2(gam.starting.model.3)
 
 ```
 
@@ -409,7 +427,7 @@ We see that the R-Squared again deteriorates not strongly. What we continue to n
 
 gam.starting.model.4 <- update(gam.starting.model.3, . ~ . - brand)
 
-summary(gam.starting.model.4)
+getR2(gam.starting.model.4)
 
 starting.model <- price ~ as.factor(age) + gearbox +
    s(powerPS) + kilometer
@@ -420,7 +438,7 @@ The result looks good. All factors show: There is strong evidence that these hav
 
 **price ~ age + gearbox + s(powerPS) + kilometer**
 
-## 3.2 Two more models
+## 3.3 Two more models
 Our starting model is already relatively complex. We have already mapped a polynomial effect of powerPS. In order to be able to make a meaningful comparison, we will create two models in this section, which differ significantly from our starting model. First, we model a very simple linear model with only two predictors and a more complex model with even more factors than in the starting model.
 
 A simple model is quickly built. We simply consider which one factor could have an influence on the price, purely logically without including the results of the graphical analysis.  We simply assume that a Porsche brand car is more expensive than a Skoda.
@@ -437,7 +455,7 @@ simple.model <- price ~ brand
 
 lm.simple.model <- lm(simple.model, data = df.cars)
 
-summary(lm.simple.model)
+summary(lm.simple.model)$r.squared
 
 ```
 
@@ -457,13 +475,13 @@ s(powerPS) + gearbox + kilometer
 
 gam.complex.model <- gam(complex.model, data = df.cars)
 
-summary(gam.complex.model)
+getR2(gam.complex.model)
 
 ```
 
 The R-Squared is now correspondingly higher. We are curious if this automatically leads to a better result in the prediction of price.
 
-## 3.3 A comparison of the models
+## 3.4 A comparison of the models
 To compare our models we use the 10-fold cross validation concept. To obtain a meaningful value for the accuracy of the prediction, we split our dataset df.cars into two datasets. A training data set, which contains about 75% of all data and a test data set, which contains the remaining 25% of the data. This ensures that we can train our model on the training data set and then let it make a prediction based on a new, unknown test data set. We train all three models ten times and then make predictions. We use R-Squared as an accuracy indicator, which we have already used to evaluate the models. From the 10 runs we finally take the arithmetic mean.
 
 In our case an error occurred at first. Because certain levels of the categories brand and fuelType have only one value, it can happen that a model is trained on the basis of factors with fewer levels than it is finally predicted. We solve this problem by deleting those levels of the affected factors that occur only once.
@@ -651,6 +669,7 @@ plot(g.triangle)
 Now we want to create a more complex graph. We want to define a set of nodes that are connected to a certain node. For example, a star network can be formed. This is made possible by the : operator. This is made possible by the : operator. In the following code snippet we connect the nodes a,b and c as well as e, f and g with the node d.
 
 ```{r, warning=FALSE}
+
 g.star <- graph_from_literal(a:b:c--d--e:f:g)
 plot(g.star)
 
@@ -700,7 +719,13 @@ plot(karate)
 
 ```
 
-## 5.5 A short closing word on graphs
+## 5.5 A short closing word on graphs and further interesting graph-packages
 Graphs provide a structure to store data. In contrast to relational databases not only the entities but also the relations are given importance. So graphs are a powerful tool for data storage and allow strong queries, which would not be possible in relational environments at all or can only be reached very laboriously via many joins.
 
 A typical application example is social media. But there are also several other possibilities to use graphs. Very interesting are, for example, the interests of website visitors, which can be easily connected by means of graphs, for example to be able to design and deliver advertising very individually.
+
+Other exciting packages for graph modeling and analysis are:
+
+* *tidygraph*: With tidygraph, network objects like graphs and edges are stored similar to tibbles and data.frames. Thus the data preparation and transformation functions of dplyr can be used.
+* *ggraph*: As the name of this package suggests, ggraph brings the visualization of graphs into the same form as ggplot2.
+* *visnetwork and network3D*: visNetwork and network3D allow to create interactive graphs.
