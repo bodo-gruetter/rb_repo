@@ -408,9 +408,10 @@ summary {
 </ul></li>
 </ul></li>
 <li><a href="#modelling">3. Modelling</a><ul>
-<li><a href="#the-starting-model">3.1 The starting model</a></li>
-<li><a href="#two-more-models">3.2 Two more models</a></li>
-<li><a href="#a-comparison-of-the-models">3.3 A comparison of the models</a></li>
+<li><a href="#the-calculation-of-r-squared">3.1 The calculation of R-Squared</a></li>
+<li><a href="#the-starting-model">3.2 The starting model</a></li>
+<li><a href="#two-more-models">3.3 Two more models</a></li>
+<li><a href="#a-comparison-of-the-models">3.4 A comparison of the models</a></li>
 </ul></li>
 <li><a href="#further-experimential-analyses-with-cars-dataset">4. Further experimential analyses with cars dataset</a><ul>
 <li><a href="#aggregation-functions-using-streams">4.1. Aggregation functions using streams</a></li>
@@ -964,8 +965,18 @@ summary(lm.cars.interaction.3)</code></pre>
 </div>
 <div id="modelling" class="section level1">
 <h1>3. Modelling</h1>
+<div id="the-calculation-of-r-squared" class="section level2">
+<h2>3.1 The calculation of R-Squared</h2>
+<p>For the comparison of our models we will use the r-squared value. The R-squared value describes how much of the variation of price is explained by the modelled predictors.</p>
+<p>Because it is not possible to access this value using the GAM function in the Summary, we have written a function which calculates and returns the R-Squared. So we don’t always have to output the whole content of Summary.</p>
+<pre class="r"><code>getR2 &lt;- function(gam){
+   R2 &lt;- 1-((sum(residuals(gam)^2))/
+               (sum((gam$y - mean(gam$y))^2)))
+   return(paste(&quot;R-Squared: &quot;, R2))
+}</code></pre>
+</div>
 <div id="the-starting-model" class="section level2">
-<h2>3.1 The starting model</h2>
+<h2>3.2 The starting model</h2>
 <p>We have now examined a wide variety of variables and their effects on the target variable <em>price</em> using a variety of graphs. Now we want to develop a good model from these findings and compare it with two models of different degrees of complexity. To achieve this we must first define a starting model that we can further develop.</p>
 <p>In the graphical analysis the following categorical variables have shown significant effects on the price of the vehicles: yearOfRegistration, age, brand, fuelType, gearbox, vehicleType and notRepairedDamage. The notRepairedDamage improves the model only minimally. Therefore this factor is not considered in our starting model.</p>
 <p>The numeric variables: powerPS and kilometers show significant effects on the price. While the effects of kilometer and age can be considered linear, PS shows a cubic effect.</p>
@@ -1057,52 +1068,28 @@ summary(gam.starting.model.1)</code></pre>
 ## R-sq.(adj) =  0.748   Deviance explained = 74.9%
 ## GCV = 366.78  Scale est. = 365.37    n = 16409</code></pre>
 <p>The R-squared-value is with over 70% quite high. Our starting model seems to be a relatively good model. When we look at the individual predictors, something catches our eye relatively quickly. In this constellation, no level of fuelType has a significant influence on price. Since our goal is to develop a model that is as good as possible so that all variables have a significant influence on price, we decide to remove this factor from the model.</p>
+<p><em>For reasons of reading flow, we will from now on output only the R-squared value.</em></p>
 <pre class="r"><code>gam.starting.model.2 &lt;- update(gam.starting.model.1, . ~ . - fuelType)
 
-summary(gam.starting.model.2)</code></pre>
+getR2(gam.starting.model.2)</code></pre>
+<pre><code>## [1] &quot;R-Squared:  0.739694698030594&quot;</code></pre>
 <p>The result looks much better. If we now look at the R-squared-value, we can see that it gets only slightly worse by omitting fuelType. If we look now at vehicleType, we see that only three levels have a highly significant effect on the price. So we check if omitting this variable changes the R-Squared strongly.</p>
 <pre class="r"><code>gam.starting.model.3 &lt;- update(gam.starting.model.2, . ~ . - vehicleType)
 
-summary(gam.starting.model.3)</code></pre>
+getR2(gam.starting.model.3)</code></pre>
+<pre><code>## [1] &quot;R-Squared:  0.711654721708072&quot;</code></pre>
 <p>We see that the R-Squared again deteriorates not strongly. What we continue to notice, however, is the strong change in the “brand” factor. One example is the Peugeot brand. This no longer has any significant effect. Besides this brand, the significance values of many other brands have also changed. In the next step we will investigate the effect of omitting this factor on the result of the model hypothesis test.</p>
 <pre class="r"><code>gam.starting.model.4 &lt;- update(gam.starting.model.3, . ~ . - brand)
 
-summary(gam.starting.model.4)</code></pre>
-<pre><code>## 
-## Family: gaussian 
-## Link function: identity 
-## 
-## Formula:
-## price ~ as.factor(age) + gearbox + s(powerPS) + kilometer
-## 
-## Parametric coefficients:
-##                   Estimate Std. Error t value Pr(&gt;|t|)    
-## (Intercept)      1.589e+02  6.987e-01  227.37   &lt;2e-16 ***
-## as.factor(age)2 -6.974e+00  8.016e-01   -8.70   &lt;2e-16 ***
-## as.factor(age)3 -1.304e+01  7.902e-01  -16.50   &lt;2e-16 ***
-## as.factor(age)4 -1.991e+01  7.857e-01  -25.34   &lt;2e-16 ***
-## as.factor(age)5 -2.629e+01  8.085e-01  -32.52   &lt;2e-16 ***
-## gearboxmanuell  -9.688e+00  4.467e-01  -21.69   &lt;2e-16 ***
-## kilometer       -1.200e-04  5.447e-06  -22.02   &lt;2e-16 ***
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
-## 
-## Approximate significance of smooth terms:
-##              edf Ref.df    F p-value    
-## s(powerPS) 6.949  6.999 2239  &lt;2e-16 ***
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
-## 
-## Rank: 14/16
-## R-sq.(adj) =  0.638   Deviance explained = 63.8%
-## GCV = 526.12  Scale est. = 525.67    n = 16409</code></pre>
+getR2(gam.starting.model.4)</code></pre>
+<pre><code>## [1] &quot;R-Squared:  0.63802957205337&quot;</code></pre>
 <pre class="r"><code>starting.model &lt;- price ~ as.factor(age) + gearbox +
    s(powerPS) + kilometer</code></pre>
 <p>The result looks good. All factors show: There is strong evidence that these have an effect on price. The R-Squared is reduced by almost 10%. Since we want to have a model that is as good as possible but also as simple as possible, this is a good compromise for us. The following model results from our model development:</p>
 <p><strong>price ~ age + gearbox + s(powerPS) + kilometer</strong></p>
 </div>
 <div id="two-more-models" class="section level2">
-<h2>3.2 Two more models</h2>
+<h2>3.3 Two more models</h2>
 <p>Our starting model is already relatively complex. We have already mapped a polynomial effect of powerPS. In order to be able to make a meaningful comparison, we will create two models in this section, which differ significantly from our starting model. First, we model a very simple linear model with only two predictors and a more complex model with even more factors than in the starting model.</p>
 <p>A simple model is quickly built. We simply consider which one factor could have an influence on the price, purely logically without including the results of the graphical analysis. We simply assume that a Porsche brand car is more expensive than a Skoda.</p>
 <p>Based on these consideration, we set up the following simple model:</p>
@@ -1112,60 +1099,8 @@ summary(gam.starting.model.4)</code></pre>
 
 lm.simple.model &lt;- lm(simple.model, data = df.cars)
 
-summary(lm.simple.model)</code></pre>
-<pre><code>## 
-## Call:
-## lm(formula = simple.model, data = df.cars)
-## 
-## Residuals:
-##      Min       1Q   Median       3Q      Max 
-## -246.539  -19.462   -1.489   17.130  162.938 
-## 
-## Coefficients:
-##                    Estimate Std. Error t value Pr(&gt;|t|)    
-## (Intercept)         114.227      4.105  27.828  &lt; 2e-16 ***
-## brandaudi            36.682      4.159   8.820  &lt; 2e-16 ***
-## brandbmw             37.746      4.172   9.048  &lt; 2e-16 ***
-## brandchevrolet      -12.937      4.827  -2.680 0.007369 ** 
-## brandchrysler        25.594     12.980   1.972 0.048652 *  
-## brandcitroen        -13.124      4.605  -2.850 0.004373 ** 
-## branddacia          -20.101      4.719  -4.260 2.06e-05 ***
-## branddaihatsu       -52.140     17.892  -2.914 0.003572 ** 
-## brandfiat           -21.908      4.378  -5.005 5.66e-07 ***
-## brandford            -1.003      4.221  -0.238 0.812088    
-## brandhonda           -4.266      5.326  -0.801 0.423125    
-## brandhyundai         -8.815      4.369  -2.018 0.043657 *  
-## brandjaguar          65.916      7.896   8.348  &lt; 2e-16 ***
-## brandjeep            48.695      5.636   8.640  &lt; 2e-16 ***
-## brandkia             -4.742      4.517  -1.050 0.293824    
-## brandlada           -34.958     10.860  -3.219 0.001289 ** 
-## brandlancia          13.072     12.980   1.007 0.313924    
-## brandland_rover      75.390      5.681  13.271  &lt; 2e-16 ***
-## brandmazda           10.914      4.683   2.330 0.019797 *  
-## brandmercedes_benz   40.547      4.185   9.689  &lt; 2e-16 ***
-## brandmini            15.278      4.387   3.482 0.000499 ***
-## brandmitsubishi      -4.600      5.594  -0.822 0.410905    
-## brandnissan           1.684      4.472   0.377 0.706440    
-## brandopel            -7.139      4.206  -1.698 0.089615 .  
-## brandpeugeot        -13.349      4.421  -3.019 0.002538 ** 
-## brandporsche        132.313      4.936  26.803  &lt; 2e-16 ***
-## brandrenault        -18.673      4.327  -4.315 1.60e-05 ***
-## brandsaab            26.961     17.892   1.507 0.131867    
-## brandseat            -7.548      4.337  -1.740 0.081796 .  
-## brandskoda           -2.622      4.280  -0.613 0.540125    
-## brandsmart          -28.780      4.487  -6.414 1.46e-10 ***
-## brandsubaru          27.585      8.209   3.360 0.000781 ***
-## brandsuzuki         -11.761      4.969  -2.367 0.017951 *  
-## brandtoyota          -3.953      4.531  -0.872 0.382987    
-## brandtrabant          6.189     30.442   0.203 0.838895    
-## brandvolkswagen      11.818      4.134   2.859 0.004260 ** 
-## brandvolvo           23.909      4.943   4.837 1.33e-06 ***
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
-## 
-## Residual standard error: 30.16 on 16372 degrees of freedom
-## Multiple R-squared:  0.3744, Adjusted R-squared:  0.373 
-## F-statistic: 272.1 on 36 and 16372 DF,  p-value: &lt; 2.2e-16</code></pre>
+summary(lm.simple.model)$r.squared</code></pre>
+<pre><code>## [1] 0.3743772</code></pre>
 <p>Not surprisingly, this model has a lower R-square value than the more complex initial model.</p>
 <p>Now, we would like to setting up a model that is more complex than our final starting model To do this, we simply take our initial starting model, which we had formed using findings from exploratory graphical analysis. Since the graphical analysis did not show any interactions, it makes no sense to implement any. The following model results:</p>
 <p><strong>price ~ age + brand + fuelType + vehicleType + s(powerPS) + gearbox + kilometer</strong></p>
@@ -1175,89 +1110,12 @@ s(powerPS) + gearbox + kilometer
 
 gam.complex.model &lt;- gam(complex.model, data = df.cars)
 
-summary(gam.complex.model)</code></pre>
-<pre><code>## 
-## Family: gaussian 
-## Link function: identity 
-## 
-## Formula:
-## price ~ as.factor(age) + brand + fuelType + vehicleType + s(powerPS) + 
-##     gearbox + kilometer
-## 
-## Parametric coefficients:
-##                         Estimate Std. Error t value Pr(&gt;|t|)    
-## (Intercept)            1.567e+02  1.406e+01  11.149  &lt; 2e-16 ***
-## as.factor(age)2       -6.449e+00  6.709e-01  -9.612  &lt; 2e-16 ***
-## as.factor(age)3       -1.031e+01  6.661e-01 -15.473  &lt; 2e-16 ***
-## as.factor(age)4       -1.626e+01  6.667e-01 -24.384  &lt; 2e-16 ***
-## as.factor(age)5       -2.157e+01  6.903e-01 -31.250  &lt; 2e-16 ***
-## brandaudi              1.596e+01  2.646e+00   6.034 1.63e-09 ***
-## brandbmw               1.190e+01  2.655e+00   4.481 7.50e-06 ***
-## brandchevrolet        -2.033e+01  3.068e+00  -6.626 3.55e-11 ***
-## brandchrysler         -1.486e+01  8.242e+00  -1.803 0.071394 .  
-## brandcitroen          -1.070e+01  2.933e+00  -3.646 0.000267 ***
-## branddacia            -1.763e+01  3.029e+00  -5.822 5.93e-09 ***
-## branddaihatsu         -2.178e+01  1.135e+01  -1.920 0.054875 .  
-## brandfiat             -1.041e+01  2.796e+00  -3.724 0.000197 ***
-## brandford             -7.539e+00  2.685e+00  -2.808 0.004994 ** 
-## brandhonda            -4.205e+00  3.386e+00  -1.242 0.214312    
-## brandhyundai          -1.060e+01  2.781e+00  -3.811 0.000139 ***
-## brandjaguar            9.934e+00  5.034e+00   1.973 0.048463 *  
-## brandjeep              1.066e+00  3.624e+00   0.294 0.768531    
-## brandkia              -1.076e+01  2.876e+00  -3.743 0.000183 ***
-## brandlada             -3.411e+01  6.934e+00  -4.920 8.75e-07 ***
-## brandlancia           -9.731e+00  8.245e+00  -1.180 0.237915    
-## brandland_rover        3.725e+01  3.648e+00  10.212  &lt; 2e-16 ***
-## brandmazda            -2.702e+00  2.977e+00  -0.907 0.364187    
-## brandmercedes_benz     1.518e+01  2.667e+00   5.692 1.28e-08 ***
-## brandmini              7.158e+00  2.795e+00   2.561 0.010448 *  
-## brandmitsubishi       -1.063e+01  3.553e+00  -2.992 0.002780 ** 
-## brandnissan           -2.364e+00  2.846e+00  -0.831 0.406064    
-## brandopel             -8.106e+00  2.673e+00  -3.033 0.002427 ** 
-## brandpeugeot          -1.042e+01  2.814e+00  -3.704 0.000213 ***
-## brandporsche           6.200e+01  3.217e+00  19.272  &lt; 2e-16 ***
-## brandrenault          -1.341e+01  2.756e+00  -4.867 1.14e-06 ***
-## brandsaab              1.742e+01  1.134e+01   1.536 0.124641    
-## brandseat             -5.756e+00  2.754e+00  -2.090 0.036645 *  
-## brandskoda            -3.301e+00  2.728e+00  -1.210 0.226369    
-## brandsmart            -1.726e+01  2.900e+00  -5.952 2.70e-09 ***
-## brandsubaru            3.394e+00  5.210e+00   0.651 0.514777    
-## brandsuzuki           -9.079e+00  3.169e+00  -2.865 0.004178 ** 
-## brandtoyota           -6.013e+00  2.922e+00  -2.058 0.039615 *  
-## brandtrabant          -7.098e+00  1.933e+01  -0.367 0.713428    
-## brandvolkswagen        4.387e+00  2.629e+00   1.669 0.095220 .  
-## brandvolvo             5.205e+00  3.147e+00   1.654 0.098089 .  
-## fuelTypebenzin        -8.356e+00  1.353e+01  -0.617 0.536956    
-## fuelTypecng           -1.522e+01  1.390e+01  -1.095 0.273571    
-## fuelTypediesel         1.030e+00  1.354e+01   0.076 0.939330    
-## fuelTypeelektro       -8.965e+00  1.516e+01  -0.591 0.554297    
-## fuelTypehybrid         1.006e+01  1.383e+01   0.727 0.466980    
-## fuelTypelpg           -2.722e+00  1.380e+01  -0.197 0.843602    
-## vehicleTypebus         9.594e+00  2.696e+00   3.559 0.000373 ***
-## vehicleTypecabrio      1.194e+01  2.737e+00   4.363 1.29e-05 ***
-## vehicleTypecoupe       5.797e+00  2.754e+00   2.105 0.035341 *  
-## vehicleTypekleinwagen -6.778e+00  2.689e+00  -2.521 0.011712 *  
-## vehicleTypekombi       1.199e+00  2.686e+00   0.446 0.655336    
-## vehicleTypelimousine  -2.544e-01  2.681e+00  -0.095 0.924418    
-## vehicleTypesuv         1.340e+01  2.712e+00   4.942 7.80e-07 ***
-## gearboxmanuell        -5.599e+00  4.045e-01 -13.843  &lt; 2e-16 ***
-## kilometer             -1.977e-04  5.139e-06 -38.463  &lt; 2e-16 ***
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
-## 
-## Approximate significance of smooth terms:
-##              edf Ref.df    F p-value    
-## s(powerPS) 6.909  6.996 1060  &lt;2e-16 ***
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
-## 
-## Rank: 63/65
-## R-sq.(adj) =  0.748   Deviance explained = 74.9%
-## GCV = 366.78  Scale est. = 365.37    n = 16409</code></pre>
+getR2(gam.complex.model)</code></pre>
+<pre><code>## [1] &quot;R-Squared:  0.749161792623369&quot;</code></pre>
 <p>The R-Squared is now correspondingly higher. We are curious if this automatically leads to a better result in the prediction of price.</p>
 </div>
 <div id="a-comparison-of-the-models" class="section level2">
-<h2>3.3 A comparison of the models</h2>
+<h2>3.4 A comparison of the models</h2>
 <p>To compare our models we use the 10-fold cross validation concept. To obtain a meaningful value for the accuracy of the prediction, we split our dataset df.cars into two datasets. A training data set, which contains about 75% of all data and a test data set, which contains the remaining 25% of the data. This ensures that we can train our model on the training data set and then let it make a prediction based on a new, unknown test data set. We train all three models ten times and then make predictions. We use R-Squared as an accuracy indicator, which we have already used to evaluate the models. From the 10 runs we finally take the arithmetic mean.</p>
 <p>In our case an error occurred at first. Because certain levels of the categories brand and fuelType have only one value, it can happen that a model is trained on the basis of factors with fewer levels than it is finally predicted. We solve this problem by deleting those levels of the affected factors that occur only once.</p>
 <pre class="r"><code>df.cars &lt;- droplevels(df.cars[!df.cars$brand == &#39;trabant&#39;,])
@@ -1423,9 +1281,9 @@ relations &lt;- data.frame(from=c(&quot;Billy&quot;, &quot;Harry&quot;, &quot;Ha
 
 g &lt;- graph_from_data_frame(relations, directed=TRUE, vertices=users)
 print(g)</code></pre>
-<pre><code>## IGRAPH aaf813f DN-- 3 5 -- 
+<pre><code>## IGRAPH 4b2d7ff DN-- 3 5 -- 
 ## + attr: name (v/c)
-## + edges from aaf813f (vertex names):
+## + edges from 4b2d7ff (vertex names):
 ## [1] Billy-&gt;Harry Harry-&gt;Billy Harry-&gt;Ruth  Ruth -&gt;Harry Ruth -&gt;Billy</code></pre>
 <p>As the output shows, it is a directed, named graph with 3 nodes and 5 edges. The nodes each have an attribute: name. In the last line, the relations representing the same image as in the figure of the last section are given. Now we ask ourselves the question how we can display the graph visually so that it looks similar to the figure just mentioned.</p>
 <pre class="r"><code>plot(g)</code></pre>

@@ -1,9 +1,11 @@
 ---
-title: "R Bootcamp Assignment: Prediction of the price of second hand cars"
+title: 'R Bootcamp Assignment: Prediction of the price of second hand cars'
 output:
+  pdf_document:
+    toc: yes
   html_document:
-    toc: true
     theme: united
+    toc: yes
 ---
 
 ## Goal
@@ -401,22 +403,26 @@ summary(gam.starting.model.1)
 
 The R-squared-value is with over 70% quite high. Our starting model seems to be a relatively good model. When we look at the individual predictors, something catches our eye relatively quickly. In this constellation, no level of fuelType has a significant influence on price. Since our goal is to develop a model that is as good as possible so that all variables have a significant influence on price, we decide to remove this factor from the model.
 
-*For reasons of reading flow, we will from now on output only the R-squared value.*
+*For reasons of reading flow, we will from now on output only the p-values and the R-squared value.*
 
-```{r, message=FALSE, results='hide'}
+```{r, message=FALSE}
 
 gam.starting.model.2 <- update(gam.starting.model.1, . ~ . - fuelType)
 
+summary(gam.starting.model.2 )$p.table[,4]
+summary(gam.starting.model.2 )$s.table
 getR2(gam.starting.model.2)
 
 ```
 
 The result looks much better. If we now look at the R-squared-value, we can see that it gets only slightly worse by omitting fuelType. If we look now at vehicleType, we see that only three levels have a highly significant effect on the price. So we check if omitting this variable changes the R-Squared strongly.
 
-```{r, message=FALSE, results='hide'}
+```{r, message=FALSE}
 
 gam.starting.model.3 <- update(gam.starting.model.2, . ~ . - vehicleType)
 
+summary(gam.starting.model.3 )$p.table[,4]
+summary(gam.starting.model.3 )$s.table
 getR2(gam.starting.model.3)
 
 ```
@@ -426,6 +432,9 @@ We see that the R-Squared again deteriorates not strongly. What we continue to n
 ```{r, message=FALSE}
 
 gam.starting.model.4 <- update(gam.starting.model.3, . ~ . - brand)
+
+summary(gam.starting.model.4 )$p.table[,4]
+summary(gam.starting.model.4 )$s.table
 
 getR2(gam.starting.model.4)
 
